@@ -1,0 +1,157 @@
+/* styles.css */
+
+.tile-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.tile-item {
+  position: relative;
+  background: #eee;
+  gap: 0.5em;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  text-align: left;
+}
+.tile-item svg {
+  position: relative;
+  width: 32px;
+  z-index: 0;
+  height: 32px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+.tile-item input[type="number"] {
+  display: flex;
+  all: unset;
+
+  box-sizing: border-box;
+  background: #fff;
+}
+.tile-item:hover:before {
+  content: "×";
+  z-index: 2;
+  position: absolute;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: 1em;
+  right: 1em;
+  width: 1em;
+  height: 1em;
+  color: #000;
+  background: #fff;
+  border-radius: 1em;
+}
+
+.controls {
+  display: flex;
+  justify-content: start;
+  align-items: stretch;
+  flex-wrap: wrap;
+  width: 100%;
+  margin: 0 auto;
+  gap: 0.5em;
+  & > * {
+    aspect-ratio: 1/1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #eee;
+    padding: 8px 12px;
+    flex: 1 0 0%;
+    gap: 0.5em;
+    & > label,
+    & > input,
+    & > button {
+      color: hsl(0deg 0% 0% / 0.4);
+    }
+  }
+  .multi-container {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    row-gap: 1em;
+    label {
+      min-width: 16ch;
+      text-align: left;
+    }
+    & > * {
+      display: flex;
+      align-items: center;
+    }
+  }
+}
+
+.error {
+  color: red;
+}
+
+select {
+  all: unset;
+  box-sizing: border-box;
+  cursor: pointer;
+  padding: 0.75em;
+  background: #fff;
+}
+
+input[type="file"] {
+  all: unset;
+  box-sizing: border-box;
+  &:hover::file-selector-button {
+    cursor: pointer;
+    background: #000;
+    color: #fff;
+  }
+}
+
+input[type="file"]::file-selector-button {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  width: 100%;
+  text-align: center;
+  background: #fff;
+  padding: 1em 1.25em;
+  margin-bottom: 1em;
+}
+
+.svg-container {
+  display: inline-block;
+  border: 1px solid #ccc;
+}
+
+.svg-container svg {
+  display: block; /* Prevent inline SVG from introducing spaces */
+  max-width: 100%;
+  height: auto;
+}
+
+.generator {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+}
+
+body {
+  font-size: 12px;
+  line-height: 1;
+}
+
+a {
+  display: block;
+  margin-top: 10px;
+  color: #000;
+}
+
+* {
+  font-family: monospace;
+  text-transform: uppercase;
+  box-sizing: border-box;
+  accent-color: #000;
+  margin: 0;
+}
+html {
+  scrollbar-gutter: stable both-edges;
+}
