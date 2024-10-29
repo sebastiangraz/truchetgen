@@ -1,6 +1,6 @@
 //svgutils.ts
 
-import { Tile, RotationType, ShapeType } from "../types";
+import { Tile, ProcessedTile, RotationType, ShapeType } from "../types";
 
 export const traverseAndRemoveFills = (element: Element) => {
   element.setAttribute("fill", "none");
@@ -13,7 +13,7 @@ export const traverseAndRemoveFills = (element: Element) => {
 
 // 6. Generate Tiled SVG Function
 export const generateTiledSVG = (
-  tiles: Tile[],
+  tiles: ProcessedTile[],
   gridSize: number,
   tileSize: number,
   shape: ShapeType,
@@ -24,9 +24,6 @@ export const generateTiledSVG = (
   const svgHeight = gridSize * tileSize;
 
   let svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}">`;
-
-  const centerX = gridSize / 2;
-  const centerY = gridSize / 2;
 
   for (let row = 0; row < gridSize; row++) {
     for (let col = 0; col < gridSize; col++) {
@@ -40,18 +37,23 @@ export const generateTiledSVG = (
         sigma
       );
 
-      console.log(tiles);
       // Get rotation angle
       const rotationAngle = getRotationAngle(rotation, row, col, gridSize);
 
       const xPos = col * tileSize;
       const yPos = row * tileSize;
 
+      // Sanitize fileName for ID
+      const sanitizedFileName = sanitizeForId(selectedTile.fileName);
+
+      // Ensure uniqueness
+      const uniqueId = `${sanitizedFileName}`;
+
       const transform = `translate(${xPos}, ${yPos}) rotate(${rotationAngle}, ${
         tileSize / 2
       }, ${tileSize / 2})`;
 
-      svgString += `<g id="${shape}" transform="${transform}">${selectedTile}</g>`;
+      svgString += `<g id="${uniqueId}" transform="${transform}">${selectedTile.processedSVG}</g>`;
     }
   }
 
@@ -59,12 +61,15 @@ export const generateTiledSVG = (
   return svgString;
 };
 
+export const sanitizeForId = (input: string): string => {
+  return input
+    .replace(/[^a-zA-Z0-9\-_:.]/g, "")
+    .replace(/\s+/g, "_")
+    .trim();
+};
+
 // 3. Extract Inner SVG
-export const extractInnerSVG = (
-  tile: Tile,
-  svgContent: string,
-  tileSize: number
-): string => {
+export const extractInnerSVG = (tile: Tile, tileSize: number): string => {
   const { svg } = tile;
   const parser = new DOMParser();
   const doc = parser.parseFromString(svg, "image/svg+xml");
@@ -133,10 +138,10 @@ export const extractInnerSVG = (
 export const processUploadedTiles = (
   tiles: Tile[],
   tileSize: number
-): Tile[] => {
+): ProcessedTile[] => {
   return tiles
     .map((tile) => {
-      const processedSVG = extractInnerSVG(tile, tile.svg, tileSize);
+      const processedSVG = extractInnerSVG(tile, tileSize);
       return {
         ...tile,
         processedSVG,
@@ -147,13 +152,13 @@ export const processUploadedTiles = (
 
 // 7. Select Tile for Position
 export const selectTileForPosition = (
-  tiles: Tile[],
+  tiles: ProcessedTile[],
   row: number,
   col: number,
   gridSize: number,
   shape: ShapeType,
   sigma: number
-): string => {
+): ProcessedTile => {
   switch (shape) {
     case "random":
       return selectTileRandom(tiles);
@@ -169,19 +174,19 @@ export const selectTileForPosition = (
 };
 
 // 7a. Select Tile Randomly
-export const selectTileRandom = (tiles: Tile[]): string => {
+export const selectTileRandom = (tiles: ProcessedTile[]): ProcessedTile => {
   const randomIndex = Math.floor(Math.random() * tiles.length);
-  return tiles[randomIndex].processedSVG!;
+  return tiles[randomIndex];
 };
 
 // 7b. Select Tile for Circle Shape
 export const selectTileCircle = (
-  tiles: Tile[],
+  tiles: ProcessedTile[],
   row: number,
   col: number,
   gridSize: number,
   sigma: number
-): string => {
+): ProcessedTile => {
   const centerX = gridSize / 2;
   const centerY = gridSize / 2;
   const totalRadius = gridSize / 2;
@@ -238,16 +243,16 @@ export const selectTileCircle = (
   }
 
   // Select the tile corresponding to the ring
-  return sortedTiles[ringIndex].processedSVG!;
+  return sortedTiles[ringIndex];
 };
 
 // 7c. Select Tile for Gradient Shape
 export const selectTileGradient = (
-  tiles: Tile[],
+  tiles: ProcessedTile[],
   row: number,
   gridSize: number,
   sigma: number // Accept sigma here
-): string => {
+): ProcessedTile => {
   const normalizedRow = row / (gridSize - 1); // 0 at top, 1 at bottom
 
   // Sort tiles by busyness in descending order
@@ -284,7 +289,7 @@ export const selectTileGradient = (
   for (const w of normalizedWeights) {
     cumulative += w.weight;
     if (rand <= cumulative) {
-      return sortedTiles[w.index].processedSVG!;
+      return sortedTiles[w.index];
     }
   }
 
@@ -293,12 +298,12 @@ export const selectTileGradient = (
 };
 
 export const selectTileExponential = (
-  tiles: Tile[],
+  tiles: ProcessedTile[],
   row: number,
   col: number,
   gridSize: number,
   sigma: number // Accept sigma here
-): string => {
+): ProcessedTile => {
   const normalizedRow = row / Math.max(1, gridSize - 1);
 
   // Calculate exponent based on sigma
@@ -315,7 +320,7 @@ export const selectTileExponential = (
     const busyTiles = tiles.filter((tile) => tile.busyness === 10);
     if (busyTiles.length > 0) {
       const busyIndex = Math.floor(Math.random() * busyTiles.length);
-      return busyTiles[busyIndex].processedSVG!;
+      return busyTiles[busyIndex];
     } else {
       return selectTileRandom(tiles);
     }
@@ -323,7 +328,7 @@ export const selectTileExponential = (
     const emptyTiles = tiles.filter((tile) => tile.busyness === 0);
     if (emptyTiles.length > 0) {
       const emptyIndex = Math.floor(Math.random() * emptyTiles.length);
-      return emptyTiles[emptyIndex].processedSVG!;
+      return emptyTiles[emptyIndex];
     } else {
       return selectTileRandom(tiles);
     }

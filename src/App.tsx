@@ -216,8 +216,9 @@ const TruchetGenerator: React.FC<TruchetGeneratorProps> = ({
             Clear All Tiles
           </span>
           <a
+            target="_blank"
             href={`data:image/svg+xml;base64,${btoa(tiledSVG)}`}
-            download="truchet_tiles.svg"
+            download={`${shape}-s${sigma}-${gridSize}x${gridSize}-truchet.svg`}
           >
             Download SVG
           </a>{" "}

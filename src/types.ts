@@ -1,8 +1,11 @@
 export interface Tile {
   svg: string;
   busyness: number;
-  processedSVG?: string;
   fileName: string;
+}
+
+export interface ProcessedTile extends Tile {
+  processedSVG: string;
 }
 
 export type ShapeType = "random" | "circle" | "gradient" | "exponential";
