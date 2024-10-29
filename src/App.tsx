@@ -111,10 +111,23 @@ const TruchetGenerator: React.FC<TruchetGeneratorProps> = ({
   return (
     <div className="generator">
       <div className="controls">
-        <h1>
-          Truchet
-          <br /> Generator
-        </h1>
+        <div className="multi-container">
+          <h1>
+            Truchet
+            <br /> Generator
+          </h1>
+          <hr />
+          <span onClick={clearAllTiles} className="clear-all-button">
+            Clear All Tiles
+          </span>
+          <a
+            target="_blank"
+            href={`data:image/svg+xml;base64,${btoa(tiledSVG)}`}
+            download={`${shape}-s${sigma}-${gridSize}x${gridSize}-truchet.svg`}
+          >
+            Download SVG
+          </a>{" "}
+        </div>
         <div className="upload-container">
           <input
             type="file"
@@ -210,18 +223,6 @@ const TruchetGenerator: React.FC<TruchetGeneratorProps> = ({
               onChange={handleSigmaChange}
             />
           </div>
-        </div>
-        <div className="multi-container">
-          <span onClick={clearAllTiles} className="clear-all-button">
-            Clear All Tiles
-          </span>
-          <a
-            target="_blank"
-            href={`data:image/svg+xml;base64,${btoa(tiledSVG)}`}
-            download={`${shape}-s${sigma}-${gridSize}x${gridSize}-truchet.svg`}
-          >
-            Download SVG
-          </a>{" "}
         </div>
       </div>
       {error && <p className="error">{error}</p>}

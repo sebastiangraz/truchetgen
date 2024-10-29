@@ -4,14 +4,15 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
+  gap: 0.5em;
 }
 .tile-item {
   position: relative;
   background: #eee;
-  gap: 0.5em;
+  gap: 0.25em;
   display: flex;
   flex-direction: column;
-  padding: 10px;
+
   text-align: left;
 }
 .tile-item svg {
