@@ -1,5 +1,3 @@
-//App.tsx
-
 import React, { useState, useEffect, ChangeEvent, useMemo } from "react";
 import { generateTiledSVG, processUploadedTiles } from "./utils/svgutils";
 import { handleFileUpload } from "./utils/fileutils";
@@ -31,16 +29,6 @@ const TruchetGenerator: React.FC<TruchetGeneratorProps> = ({
   useEffect(() => {
     localStorage.setItem("uploadedTiles", JSON.stringify(uploadedTiles));
   }, [uploadedTiles]);
-
-  // Utility function to remove fills
-  const traverseAndRemoveFills = (element: Element) => {
-    element.setAttribute("fill", "none");
-    element.childNodes.forEach((child) => {
-      if (child instanceof Element) {
-        traverseAndRemoveFills(child);
-      }
-    });
-  };
 
   // 4. Processed Tiles Memoization
   const processedTiles = useMemo(
@@ -77,6 +65,7 @@ const TruchetGenerator: React.FC<TruchetGeneratorProps> = ({
     const selectedRotation = e.target.value as RotationType;
     setRotation(selectedRotation);
   };
+
   const handleSigmaChange = (e: ChangeEvent<HTMLInputElement>) => {
     const newSigma = parseFloat(e.target.value);
     setSigma(newSigma);
@@ -105,6 +94,24 @@ const TruchetGenerator: React.FC<TruchetGeneratorProps> = ({
   const clearAllTiles = () => {
     setUploadedTiles([]);
     localStorage.removeItem("uploadedTiles");
+  };
+
+  // New function to add an empty tile
+  const addEmptyTile = () => {
+    // Create an empty SVG string
+    const emptySvgContent = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <rect width="24" height="24" fill="none" />
+      </svg>
+    `;
+
+    const newTile: Tile = {
+      svg: emptySvgContent,
+      fileName: "empty",
+      busyness: 0, // Since it's empty
+    };
+
+    setUploadedTiles((prevTiles) => [...prevTiles, newTile]);
   };
 
   // JSX Rendering
@@ -136,8 +143,8 @@ const TruchetGenerator: React.FC<TruchetGeneratorProps> = ({
             onChange={(e) => handleFileUpload(e, setUploadedTiles, setError)}
           />
         </div>
-        {uploadedTiles.length > 0 && (
-          <div className="uploaded-tiles">
+        <div className="uploaded-tiles">
+          {uploadedTiles.length > 0 && (
             <div className="tile-list">
               {uploadedTiles.map((tile, index) => {
                 const processedSVG = processedTiles[index]?.processedSVG || "";
@@ -162,10 +169,13 @@ const TruchetGenerator: React.FC<TruchetGeneratorProps> = ({
                     <p className="file-name">{fileName}</p>
                   </div>
                 );
-              })}
+              })}{" "}
             </div>
-          </div>
-        )}
+          )}
+          <span onClick={addEmptyTile} className="empty">
+            Empty tile
+          </span>
+        </div>
         <div className="multi-container">
           <div>
             <label htmlFor="shape">Shape</label>
