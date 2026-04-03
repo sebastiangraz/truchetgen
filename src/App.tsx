@@ -19,7 +19,7 @@ import {
 } from "./utils/defaultTiles";
 import { Tile, ShapeType, RotationType, OpacityType } from "./types";
 
-import "./styles.css";
+import styles from "./App.module.css";
 
 interface TruchetGeneratorProps {
   tileSize?: number;
@@ -282,15 +282,16 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
     fileName.substring(0, fileName.lastIndexOf(".")) || fileName;
 
   return (
-    <div className="generator">
-      <div className="app-grid">
-        <div className="app-grid__cell app-grid__cell--title">
-          <div className="multi-container multi-container--title">
+    <div className={styles.root}>
+      <div className={styles.grid}>
+        <div
+          className={`${styles.cell} ${styles.cellTitle} ${styles.stack} ${styles.stackCentered}`}
+        >
             <h1>
               Truchet
               <br /> Generator
             </h1>
-            <div className="upload-container">
+            <div className={styles.upload}>
               <input
                 type="file"
                 accept=".svg"
@@ -298,10 +299,9 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                 onChange={(e) => handleFileUpload(e, setActiveTiles, setError)}
               />
             </div>
-          </div>
         </div>
-        <div className="app-grid__cell app-grid__cell--controls">
-          <div className="multi-container">
+        <div className={`${styles.cell} ${styles.cellControls}`}>
+          <div className={styles.stack}>
             <div>
               <label htmlFor="shape">Shape</label>
               <select
@@ -346,9 +346,9 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
             </div>
           </div>
         </div>
-        <div className="app-grid__cell app-grid__cell--sliders">
-          <div className="sliders-subgrid-panel">
-            <div className="slider-row">
+        <div className={`${styles.cell} ${styles.cellSliders}`}>
+          <div className={styles.ranges}>
+            <div className={styles.rangeRow}>
               <label htmlFor="gridSize">
                 Grid Size {gridSize}x{gridSize}
               </label>
@@ -362,7 +362,7 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                 onChange={handleSliderChange}
               />
             </div>
-            <div className="slider-row">
+            <div className={styles.rangeRow}>
               <label htmlFor="shapeSpread">
                 Shape Spread {shapeSpread.toFixed(2)}
               </label>
@@ -377,7 +377,7 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                 onChange={handleShapeSpreadChange}
               />
             </div>
-            <div className="slider-row">
+            <div className={styles.rangeRow}>
               <label htmlFor="rotationRandomness">
                 Rotation Randomness {rotationRandomness.toFixed(2)}
               </label>
@@ -393,7 +393,7 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
               />
             </div>
             {opacity !== "uniform" && (
-              <div className="slider-row">
+              <div className={styles.rangeRow}>
                 <label htmlFor="opacitySigma">
                   Opacity Sigma {opacitySigma.toFixed(2)}
                 </label>
@@ -409,7 +409,7 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                 />
               </div>
             )}
-            <div className="slider-row">
+            <div className={styles.rangeRow}>
               <label htmlFor="opacityRandomness">
                 Opacity Randomness {opacityRandomness.toFixed(2)}
               </label>
@@ -425,7 +425,7 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
               />
             </div>
             {opacity !== "uniform" && (
-              <div className="slider-row">
+              <div className={styles.rangeRow}>
                 <label htmlFor="opacityContrast">
                   Opacity Contrast {opacityContrast.toFixed(2)}
                 </label>
@@ -444,12 +444,14 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
           </div>
         </div>
 
-        <div className="app-grid__cell app-grid__cell--catalog tiles-column tiles-column--catalog">
-          <p className="tiles-column-heading">Default tiles</p>
+        <div
+          className={`${styles.cell} ${styles.cellCatalog} ${styles.panel} ${styles.catalog}`}
+        >
+          <p className={styles.panelLabel}>Default tiles</p>
           {!hasAssetCatalogTiles && (
-            <p className="tiles-column-empty">No assets in src/assets/tiles</p>
+            <p className={styles.panelHint}>No assets in src/assets/tiles</p>
           )}
-          <ul className="default-tile-list">
+          <ul className={styles.list}>
             {catalogTiles.map((tile, index) => {
               const processedSVG =
                 processedCatalogTiles[index]?.processedSVG || "";
@@ -457,19 +459,19 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                 <li key={tile.id}>
                   <button
                     type="button"
-                    className="default-tile-item"
+                    className={styles.pick}
                     onClick={() => addCatalogTileToActive(tile)}
                     title="Add to sequence"
                   >
                     <div
                       className={
                         tile.id === PRELOADED_SPREAD_EXEMPT_TILE_ID
-                          ? "default-tile-thumb default-tile-thumb--spread-exempt"
-                          : "default-tile-thumb"
+                          ? `${styles.thumb} ${styles.spreadExempt}`
+                          : styles.thumb
                       }
                       dangerouslySetInnerHTML={{ __html: processedSVG }}
                     />
-                    <span className="default-tile-name">
+                    <span className={styles.label}>
                       {displayName(tile.fileName)}
                     </span>
                   </button>
@@ -478,11 +480,13 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
             })}
           </ul>
         </div>
-        <div className="app-grid__cell app-grid__cell--active tiles-column tiles-column--active">
-          <p className="tiles-column-heading">Tiles in use</p>
-          <div className="active-tiles-inner">
+        <div
+          className={`${styles.cell} ${styles.cellActive} ${styles.panel}`}
+        >
+          <p className={styles.panelLabel}>Tiles in use</p>
+          <div className={styles.panelBody}>
             {activeTiles.length > 0 && (
-              <div className="tile-list">
+              <div className={styles.sequence}>
                 {activeTiles.map((tile, index) => {
                   const processedSVG =
                     processedTiles[index]?.processedSVG || "";
@@ -490,20 +494,17 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                   return (
                     <div
                       key={tile.id}
-                      className={
-                        tile.distribute
-                          ? "tile-item tile-item--distribute"
-                          : "tile-item"
-                      }
+                      className={styles.card}
+                      data-distribute={tile.distribute ? "true" : undefined}
                       onDragOver={handleDragOver}
                       onDrop={handleDrop(index)}
                     >
-                      <div className="tile-item-body">
+                      <div className={styles.body}>
                         <div
                           className={
                             isSpreadExempt(tile)
-                              ? "tile-svg-wrap tile-svg-wrap--spread-exempt"
-                              : "tile-svg-wrap"
+                              ? `${styles.preview} ${styles.spreadExempt}`
+                              : styles.preview
                           }
                           draggable
                           onDragStart={handleDragStart(index)}
@@ -511,23 +512,23 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                           title="Drag to reorder"
                         >
                           <div
-                            className="tile-svg"
+                            className={styles.graphic}
                             style={{
                               transform: `rotate(${tileDeg}deg)`,
                               transformOrigin: "center center",
                             }}
                             dangerouslySetInnerHTML={{ __html: processedSVG }}
                           />
-                          <span className="tile-drag-icon" aria-hidden="true">
+                          <span className={styles.dragHint} aria-hidden="true">
                             ⋮⋮
                           </span>
                         </div>
-                        <p className="file-name">
+                        <p className={styles.fileName}>
                           {displayName(tile.fileName)}
                         </p>
                         <button
                           type="button"
-                          className="tile-rotate"
+                          className={`${styles.cardAction} ${styles.cardActionAccent}`}
                           onClick={() => rotateTileAt(index)}
                           aria-label="Rotate tile 90 degrees clockwise"
                         >
@@ -537,8 +538,8 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                           type="button"
                           className={
                             tile.distribute
-                              ? "tile-distribute tile-distribute--on"
-                              : "tile-distribute"
+                              ? `${styles.cardAction} ${styles.cardActionSuccess} ${styles.distributeOn}`
+                              : `${styles.cardAction} ${styles.cardActionSuccess}`
                           }
                           onClick={() => toggleDistributeAt(index)}
                           aria-pressed={tile.distribute ?? false}
@@ -552,7 +553,7 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                         </button>
                         <button
                           type="button"
-                          className="tile-delete"
+                          className={`${styles.cardAction} ${styles.cardActionDanger}`}
                           onClick={() => deleteTile(index)}
                         >
                           Delete
@@ -563,17 +564,17 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                 })}
               </div>
             )}
-            <div className="active-tiles-actions">
+            <div className={styles.toolbar}>
               <button
                 type="button"
-                className="reset-rotations-button"
+                className={`${styles.barButton} ${styles.barButtonAccent}`}
                 onClick={resetAllRotations}
               >
                 Reset all rotations
               </button>
               <button
                 type="button"
-                className="clear-all-button"
+                className={`${styles.barButton} ${styles.barButtonDanger}`}
                 onClick={clearAllTiles}
               >
                 Clear All Tiles
@@ -583,20 +584,18 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
         </div>
       </div>
 
-      {error && <p className="error">{error}</p>}
+      {error && <p className={styles.error}>{error}</p>}
 
       {activeTiles.length > 0 && (
-        <div>
-          <div className="output">
-            {tiledSVG && (
-              <div
-                className="svg-container"
-                dangerouslySetInnerHTML={{ __html: tiledSVG }}
-              />
-            )}
-          </div>
+        <div className={styles.previewSection}>
+          {tiledSVG && (
+            <div
+              className={styles.previewFrame}
+              dangerouslySetInnerHTML={{ __html: tiledSVG }}
+            />
+          )}
           <a
-            className="download-svg-button"
+            className={styles.download}
             target="_blank"
             href={`data:image/svg+xml;base64,${btoa(tiledSVG)}`}
             download={`${shape}-o${opacity}-os${opacitySigma}-ornd${opacityRandomness}-oc${opacityContrast}-spread${shapeSpread}-rr${rotationRandomness}-${gridSize}x${gridSize}-truchet.svg`}

@@ -15,7 +15,7 @@ This document describes what the main React entry component does so humans and a
    - **shape** mode: random, circle, gradient, or exponential,
    - **rotation** mode: default, random, or pyramid,
    - **sigma** (0.01–1.0): a smoothness / distribution parameter passed into the generator (default 0.15).
-4. **Rendering** — The generated SVG is injected into the page with `dangerouslySetInnerHTML` inside an `.output` / `.svg-container` region when there is at least one uploaded tile and non-empty output.
+4. **Rendering** — The generated SVG is injected with `dangerouslySetInnerHTML` inside a `.previewFrame` region (CSS Module class from `App.module.css`), wrapped by `.previewSection`, when there is at least one uploaded tile and non-empty output.
 
 ## Persistence
 
@@ -27,7 +27,7 @@ This document describes what the main React entry component does so humans and a
 
 | Control | Effect |
 |--------|--------|
-| File input (`.svg`, multiple) | Adds tiles via `handleFileUpload` (`./utils/fileutils`); errors surface in an `.error` paragraph. |
+| File input (`.svg`, multiple) | Adds tiles via `handleFileUpload` (`./utils/fileutils`); errors surface in an error paragraph (`.error` in `App.module.css`). |
 | **Clear All Tiles** | Empties the list and localStorage. |
 | **Download SVG** | Link with `data:image/svg+xml;base64,...` and a filename derived from shape, sigma, and grid size. |
 | Per-tile preview | Click preview to **delete** that tile. |
@@ -47,7 +47,8 @@ This document describes what the main React entry component does so humans and a
 - `./utils/svgutils` — `generateTiledSVG`, `processUploadedTiles`
 - `./utils/fileutils` — `handleFileUpload`
 - `./types` — `Tile`, `ShapeType`, `RotationType`
-- `./styles.css` — Layout and styling for `.generator`, `.controls`, tiles, and output
+- `./global.css` — Global reset, typography, and unscoped rules for `select` and file inputs
+- `./App.module.css` — Scoped layout and UI (grid, catalog, active tile list, preview frame, controls)
 
 ## Summary
 
