@@ -57,6 +57,8 @@
 
   .cellTitle {
     grid-area: title;
+    align-items: start;
+    justify-content: space-between;
   }
 
   .cellControls {
@@ -91,14 +93,7 @@
 }
 
 .panelLabel {
-  font-size: 10px;
-  letter-spacing: 0.06em;
   color: hsl(0 0% 0% / 0.55);
-}
-
-.panelHint {
-  font-size: 10px;
-  color: hsl(0 0% 0% / 0.45);
 }
 
 .stack {
@@ -109,7 +104,6 @@
 
   label {
     min-width: 16ch;
-    text-align: left;
   }
 
   & > * {
@@ -121,19 +115,7 @@
 .stackCentered {
   flex-direction: column;
   align-items: center;
-  text-align: center;
   gap: 0.75em;
-
-  & h1 {
-    text-align: center;
-  }
-}
-
-.upload {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .ranges {
@@ -153,7 +135,6 @@
     min-width: 0;
 
     label {
-      text-align: left;
       white-space: nowrap;
     }
 
@@ -183,14 +164,11 @@
     gap: 0.2em;
     width: 100%;
     min-width: 0;
-    margin: 0;
     padding: 0;
     border: none;
     background: transparent;
     cursor: pointer;
-    text-align: center;
-    font: inherit;
-    text-transform: uppercase;
+    font-size: inherit;
 
     &:hover .thumb {
       background: hsl(0 0% 0% / 0.04);
@@ -299,7 +277,6 @@
     top: 2px;
     right: 2px;
     font-size: 10px;
-    line-height: 1;
     letter-spacing: 0;
     color: hsl(0 0% 0% / 0.32);
     pointer-events: none;
@@ -311,11 +288,9 @@
 
   .cardAction {
     align-self: flex-start;
-    margin: 0;
     padding: 0;
     border: none;
     background: none;
-    font: inherit;
     font-size: 10px;
     color: hsl(0 0% 40%);
     text-decoration: underline;
@@ -360,7 +335,6 @@
   gap: 0.75em 1em;
 
   .barButton {
-    margin: 0;
     padding: 0;
     border: none;
     background: none;
@@ -377,7 +351,6 @@
   }
 
   .barButtonDanger {
-    font-size: 11px;
     color: hsl(0 0% 40%);
   }
 

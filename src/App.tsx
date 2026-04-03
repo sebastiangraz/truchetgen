@@ -284,21 +284,18 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
   return (
     <div className={styles.root}>
       <div className={styles.grid}>
-        <div
-          className={`${styles.cell} ${styles.cellTitle} ${styles.stack} ${styles.stackCentered}`}
-        >
-            <h1>
-              Truchet
-              <br /> Generator
-            </h1>
-            <div className={styles.upload}>
-              <input
-                type="file"
-                accept=".svg"
-                multiple
-                onChange={(e) => handleFileUpload(e, setActiveTiles, setError)}
-              />
-            </div>
+        <div className={`${styles.cell} ${styles.cellTitle} ${styles.stack}`}>
+          <h1>
+            Truchet
+            <br /> Generator
+          </h1>
+
+          <input
+            type="file"
+            accept=".svg"
+            multiple
+            onChange={(e) => handleFileUpload(e, setActiveTiles, setError)}
+          />
         </div>
         <div className={`${styles.cell} ${styles.cellControls}`}>
           <div className={styles.stack}>
@@ -449,7 +446,7 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
         >
           <p className={styles.panelLabel}>Default tiles</p>
           {!hasAssetCatalogTiles && (
-            <p className={styles.panelHint}>No assets in src/assets/tiles</p>
+            <p className={styles.panelLabel}>No assets in src/assets/tiles</p>
           )}
           <ul className={styles.list}>
             {catalogTiles.map((tile, index) => {
@@ -480,9 +477,7 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
             })}
           </ul>
         </div>
-        <div
-          className={`${styles.cell} ${styles.cellActive} ${styles.panel}`}
-        >
+        <div className={`${styles.cell} ${styles.cellActive} ${styles.panel}`}>
           <p className={styles.panelLabel}>Tiles in use</p>
           <div className={styles.panelBody}>
             {activeTiles.length > 0 && (

@@ -1,10 +1,8 @@
 html {
   scrollbar-gutter: stable both-edges;
-}
-
-body {
   font-size: 12px;
   line-height: 1;
+  color: #000;
 }
 
 * {
@@ -17,7 +15,7 @@ body {
 
 a {
   display: block;
-  color: #000;
+  color: inherit;
 }
 
 select {
@@ -52,9 +50,7 @@ input[type="file"]::file-selector-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font: inherit;
-  font-size: 12px;
-  line-height: 1;
+  font: 1rem/1 monospace;
   text-align: center;
   text-transform: inherit;
   color: #000;
