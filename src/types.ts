@@ -6,9 +6,10 @@ export interface Tile {
   /** Per-instance rotation in degrees (0, 90, 180, or −90). Applied on top of pattern rotation. */
   tileRotationDeg?: number;
   /**
-   * When true, circle / gradient / exponential ignore this tile’s list index for placement
-   * and spread it uniformly across cells (still subject to spread-exempt rules unless listed
-   * after the first spread-exempt tile).
+   * When true, this tile is omitted from shape hierarchy (remaining tiles expand to fill bands).
+   * It is placed in a number of cells equal to its ideal band size (spread→0, full list), at
+   * random positions across the grid, still subject to spread-exempt rules unless listed after
+   * the first spread-exempt tile.
    */
   distribute?: boolean;
 }

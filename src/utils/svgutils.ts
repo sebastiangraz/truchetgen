@@ -104,28 +104,14 @@ const applySpreadExemptMask = (
   orderedTiles: ProcessedTile[],
   idealIndex: number,
 ): { index: number; weight: number }[] => {
-  const firstExemptIdx = getFirstSpreadExemptIndex(orderedTiles);
-  const hasExempt = firstExemptIdx >= 0;
   const idealTile = orderedTiles[idealIndex];
 
-  const isAfterFirstExempt = (idx: number) => hasExempt && idx > firstExemptIdx;
-
-  // Ideal ring is spread-exempt: hard mask — only that ring unless a “distribute” tile
-  // sits after the first exempt boundary (those may still appear in those cells).
+  // Ideal ring is spread-exempt: hard mask — only that ring, no blur from inner rings.
   if (isSpreadExempt(idealTile)) {
-    const masked = weights.map((w) => {
-      if (w.index === idealIndex) return w;
-      const t = orderedTiles[w.index];
-      if (t.distribute && isAfterFirstExempt(w.index)) {
-        return w;
-      }
-      return { ...w, weight: 0 };
-    });
-    const sum = masked.reduce((s, w) => s + w.weight, 0);
-    if (sum <= 0) {
-      return [{ index: idealIndex, weight: 1 }];
-    }
-    return masked.map((w) => ({ ...w, weight: w.weight / sum }));
+    return weights.map((w) => ({
+      ...w,
+      weight: w.index === idealIndex ? 1 : 0,
+    }));
   }
 
   const masked = weights.map((w) => {
@@ -139,21 +125,6 @@ const applySpreadExemptMask = (
     return [{ index: idealIndex, weight: 1 }];
   }
   return masked.map((w) => ({ ...w, weight: w.weight / sum }));
-};
-
-/** Blend in uniform weights for tiles with distribute before spread-exempt masking. */
-const mergeDistributeUniformWeights = (
-  normalizedSpatialWeights: { index: number; weight: number }[],
-  orderedTiles: ProcessedTile[],
-): { index: number; weight: number }[] => {
-  const merged = normalizedSpatialWeights.map((w) =>
-    orderedTiles[w.index].distribute ? { ...w, weight: 1 } : w,
-  );
-  const sum = merged.reduce((s, w) => s + w.weight, 0);
-  if (sum <= 0) {
-    return normalizedSpatialWeights;
-  }
-  return merged.map((w) => ({ ...w, weight: w.weight / sum }));
 };
 
 const pickTileByNormalizedWeights = (
@@ -170,6 +141,177 @@ const pickTileByNormalizedWeights = (
     }
   }
   return orderedTiles[fallbackIndex];
+};
+
+const shuffleInPlace = <T,>(arr: T[]): void => {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = arr[i];
+    arr[i] = arr[j]!;
+    arr[j] = t!;
+  }
+};
+
+const cellKey = (row: number, col: number): string => `${row},${col}`;
+
+/** Ideal tile index at a cell as if shapeSpread → 0 (full tile list). */
+const getIdealTileIndexForCell = (
+  orderedTiles: ProcessedTile[],
+  row: number,
+  col: number,
+  gridSize: number,
+  shape: ShapeType,
+  shapeSpread: number,
+): number => {
+  const n = orderedTiles.length;
+  if (n <= 1) return 0;
+
+  switch (shape) {
+    case "random": {
+      const G = gridSize * gridSize;
+      const k = row * gridSize + col;
+      return Math.min(n - 1, Math.floor((k * n) / Math.max(1, G)));
+    }
+    case "circle": {
+      const centerX = gridSize / 2;
+      const centerY = gridSize / 2;
+      const totalRadius = gridSize / 2;
+      const x = col + 0.5;
+      const y = row + 0.5;
+      const distance = Math.hypot(x - centerX, y - centerY);
+      const normalizedDistance = distance / totalRadius;
+      const cumulativeAreaPercentage = normalizedDistance * normalizedDistance;
+      return getIdealCircleRingIndex(cumulativeAreaPercentage, n);
+    }
+    case "gradient":
+      return getIdealGradientTileIndex(row, gridSize, n);
+    case "exponential":
+      return getIdealExponentialGlobalIndex(
+        orderedTiles,
+        row,
+        col,
+        gridSize,
+        shapeSpread,
+      );
+    default:
+      return 0;
+  }
+};
+
+/** Count cells whose ideal index equals `targetIndex` (full list, same geometry as band quotas). */
+const countCellsInIdealBand = (
+  orderedTiles: ProcessedTile[],
+  gridSize: number,
+  shape: ShapeType,
+  shapeSpread: number,
+  targetIndex: number,
+): number => {
+  let c = 0;
+  for (let row = 0; row < gridSize; row++) {
+    for (let col = 0; col < gridSize; col++) {
+      if (
+        getIdealTileIndexForCell(
+          orderedTiles,
+          row,
+          col,
+          gridSize,
+          shape,
+          shapeSpread,
+        ) === targetIndex
+      ) {
+        c++;
+      }
+    }
+  }
+  return c;
+};
+
+const isCellEligibleForDistributeTile = (
+  orderedTiles: ProcessedTile[],
+  row: number,
+  col: number,
+  gridSize: number,
+  shape: ShapeType,
+  shapeSpread: number,
+  distIdx: number,
+): boolean => {
+  const ideal = getIdealTileIndexForCell(
+    orderedTiles,
+    row,
+    col,
+    gridSize,
+    shape,
+    shapeSpread,
+  );
+  const firstExempt = getFirstSpreadExemptIndex(orderedTiles);
+  const idealTile = orderedTiles[ideal];
+
+  if (isSpreadExempt(idealTile)) {
+    if (ideal === distIdx) return true;
+    if (firstExempt >= 0 && distIdx > firstExempt) return true;
+    return false;
+  }
+  return true;
+};
+
+/**
+ * Map "row,col" → tile for distribute instances: each gets `countCellsInIdealBand(i)` placements,
+ * chosen uniformly from the whole grid among cells not yet taken and passing exempt rules.
+ */
+const buildDistributeCellTileMap = (
+  orderedTiles: ProcessedTile[],
+  gridSize: number,
+  shape: ShapeType,
+  shapeSpread: number,
+): Map<string, ProcessedTile> => {
+  const out = new Map<string, ProcessedTile>();
+  const distributeIndices = orderedTiles
+    .map((t, i) => (t.distribute ? i : -1))
+    .filter((i) => i >= 0);
+  if (distributeIndices.length === 0) return out;
+
+  const assigned = new Set<string>();
+
+  for (const distIdx of distributeIndices) {
+    const quota = countCellsInIdealBand(
+      orderedTiles,
+      gridSize,
+      shape,
+      shapeSpread,
+      distIdx,
+    );
+    const pool: { row: number; col: number }[] = [];
+    for (let row = 0; row < gridSize; row++) {
+      for (let col = 0; col < gridSize; col++) {
+        const key = cellKey(row, col);
+        if (assigned.has(key)) continue;
+        if (
+          !isCellEligibleForDistributeTile(
+            orderedTiles,
+            row,
+            col,
+            gridSize,
+            shape,
+            shapeSpread,
+            distIdx,
+          )
+        ) {
+          continue;
+        }
+        pool.push({ row, col });
+      }
+    }
+    shuffleInPlace(pool);
+    const take = Math.min(quota, pool.length);
+    for (let i = 0; i < take; i++) {
+      const { row, col } = pool[i]!;
+      const key = cellKey(row, col);
+      assigned.add(key);
+      out.set(key, orderedTiles[distIdx]!);
+    }
+  }
+
+  return out;
 };
 
 export const traverseAndRemoveFills = (element: Element) => {
@@ -313,17 +455,30 @@ export const generateTiledSVG = (
 
   let svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}">`;
 
+  const hierarchyTiles = tiles.filter((t) => !t.distribute);
+  const distributeCellMap = buildDistributeCellTileMap(
+    tiles,
+    gridSize,
+    shape,
+    shapeSpread,
+  );
+
   for (let row = 0; row < gridSize; row++) {
     for (let col = 0; col < gridSize; col++) {
-      // Select tile based on shape
-      const selectedTile = selectTileForPosition(
-        tiles,
-        row,
-        col,
-        gridSize,
-        shape,
-        shapeSpread,
-      );
+      const key = cellKey(row, col);
+      const distributedTile = distributeCellMap.get(key);
+      const selectedTile =
+        distributedTile ??
+        (hierarchyTiles.length > 0
+          ? selectTileForPosition(
+              hierarchyTiles,
+              row,
+              col,
+              gridSize,
+              shape,
+              shapeSpread,
+            )
+          : selectTileRandom(tiles));
 
       const patternRotation = getRotationAngle(rotation, row, col, gridSize);
       const tileOffset = getTileRotationOffset(
@@ -534,9 +689,8 @@ export const selectTileCircle = (
     index: w.index,
     weight: w.weight / totalWeight,
   }));
-  const mergedSpatial = mergeDistributeUniformWeights(preMask, orderedTiles);
   const normalizedWeights = applySpreadExemptMask(
-    mergedSpatial,
+    preMask,
     orderedTiles,
     idealRingIndex,
   );
@@ -586,9 +740,8 @@ export const selectTileGradient = (
     index: w.index,
     weight: w.weight / totalWeight,
   }));
-  const mergedSpatial = mergeDistributeUniformWeights(preMask, orderedTiles);
   const normalizedWeights = applySpreadExemptMask(
-    mergedSpatial,
+    preMask,
     orderedTiles,
     idealTileIndex,
   );
@@ -641,11 +794,10 @@ export const selectTileExponential = (
   }
 
   const poolSet = new Set(poolIndices);
-  const rawWeights = orderedTiles.map((t, idx) => {
-    if (t.distribute) return { index: idx, weight: 1 };
-    if (!poolSet.has(idx)) return { index: idx, weight: 0 };
-    return { index: idx, weight: 1 };
-  });
+  const rawWeights = orderedTiles.map((_, idx) => ({
+    index: idx,
+    weight: poolSet.has(idx) ? 1 : 0,
+  }));
   const rawSum = rawWeights.reduce((s, w) => s + w.weight, 0);
   if (rawSum <= 0) {
     return selectTileRandom(tiles);

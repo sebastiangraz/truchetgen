@@ -538,8 +538,8 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                           aria-pressed={tile.distribute ?? false}
                           aria-label={
                             tile.distribute
-                              ? "Distribute on: uniform placement across the grid"
-                              : "Distribute off: follow list order for shape placement"
+                              ? "Distribute on: band-sized count, random cells; omitted from shape hierarchy"
+                              : "Distribute off: tile follows list order in the shape"
                           }
                         >
                           Distribute
