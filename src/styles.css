@@ -61,7 +61,7 @@
   color: hsl(0 0% 0% / 0.55);
 }
 .tiles-column-empty {
-  font-size: 11px;
+  font-size: 10px;
   color: hsl(0 0% 0% / 0.45);
 }
 .default-tile-list {
@@ -69,9 +69,9 @@
   padding: 0;
   margin: 0;
   display: grid;
-  grid-template-columns: repeat(6, 40px);
-  gap: 0.25em 0.3em;
-  align-content: start;
+  grid-template-columns: repeat(6, minmax(0, auto));
+  gap: 1em;
+  justify-content: space-between;
 }
 .default-tile-item {
   display: flex;
@@ -82,7 +82,8 @@
   width: 100%;
   min-width: 0;
   margin: 0;
-  padding: 4px 2px 3px;
+  padding: 0;
+  /* padding: 4px 10px 3px; */
   border: none;
   background: transparent;
   cursor: pointer;
@@ -90,7 +91,7 @@
   font: inherit;
   text-transform: uppercase;
 }
-.default-tile-item:hover {
+.default-tile-item:hover .default-tile-thumb {
   background: hsl(0 0% 0% / 0.04);
 }
 .default-tile-thumb {
@@ -136,14 +137,14 @@
   transform: rotate(-45deg);
 }
 .default-tile-name {
-  font-size: 7px;
+  font-size: 10px;
   line-height: 1.15;
   width: 100%;
   overflow: hidden;
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
   word-break: break-word;
   hyphens: auto;
 }
@@ -161,7 +162,7 @@
   flex-wrap: wrap;
   justify-content: flex-start;
   align-content: flex-start;
-  gap: 0.5em;
+  gap: 1em;
 }
 .tile-item {
   position: relative;
@@ -192,7 +193,7 @@
   flex-shrink: 0;
   top: 2px;
   right: 2px;
-  font-size: 8px;
+  font-size: 10px;
   line-height: 1;
   letter-spacing: 0;
   color: hsl(0 0% 0% / 0.32);
@@ -209,6 +210,9 @@
   min-width: 0;
   flex: 1;
 }
+.tile-item-body .file-name {
+  font-size: 10px;
+}
 .tile-item svg {
   position: relative;
   width: 32px;
@@ -223,7 +227,7 @@
   border: none;
   background: none;
   font: inherit;
-  font-size: 11px;
+  font-size: 10px;
   color: hsl(0 0% 40%);
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -249,7 +253,7 @@
   border: none;
   background: none;
   font: inherit;
-  font-size: 11px;
+  font-size: 10px;
   color: hsl(0 0% 40%);
   text-decoration: underline;
   text-underline-offset: 2px;
