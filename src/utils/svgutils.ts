@@ -19,7 +19,7 @@ export const isSpreadExempt = (tile: Pick<Tile, "fileName" | "id">): boolean =>
 /** Nearest ring index for circle mode (targets at (i+1)/n in cumulative area space). */
 export const getIdealCircleRingIndex = (
   cumulativeAreaPercentage: number,
-  numTiles: number
+  numTiles: number,
 ): number => {
   if (numTiles <= 1) return 0;
   let best = 0;
@@ -38,7 +38,7 @@ export const getIdealCircleRingIndex = (
 /** Nearest tile index along vertical gradient (targets at i/(n-1)). */
 export const getIdealGradientTileIndex = (
   normalizedRow: number,
-  numTiles: number
+  numTiles: number,
 ): number => {
   if (numTiles <= 1) return 0;
   let best = 0;
@@ -63,7 +63,7 @@ export const getIdealExponentialGlobalIndex = (
   row: number,
   col: number,
   gridSize: number,
-  shapeSpread: number
+  shapeSpread: number,
 ): number => {
   const n = tiles.length;
   if (n <= 1) return 0;
@@ -86,7 +86,7 @@ export const getIdealExponentialGlobalIndex = (
         ? 0
         : Math.min(
             busyIndices.length - 1,
-            Math.max(0, Math.round(normalizedRow * (busyIndices.length - 1)))
+            Math.max(0, Math.round(normalizedRow * (busyIndices.length - 1))),
           );
     return busyIndices[local];
   }
@@ -96,7 +96,7 @@ export const getIdealExponentialGlobalIndex = (
       ? 0
       : Math.min(
           emptyIndices.length - 1,
-          Math.max(0, Math.round(normalizedRow * (emptyIndices.length - 1)))
+          Math.max(0, Math.round(normalizedRow * (emptyIndices.length - 1))),
         );
   return emptyIndices[local];
 };
@@ -108,7 +108,7 @@ const getFirstSpreadExemptIndex = (orderedTiles: ProcessedTile[]): number =>
 const applySpreadExemptMask = (
   weights: { index: number; weight: number }[],
   orderedTiles: ProcessedTile[],
-  idealIndex: number
+  idealIndex: number,
 ): { index: number; weight: number }[] => {
   const firstExemptIdx = getFirstSpreadExemptIndex(orderedTiles);
   const hasExempt = firstExemptIdx >= 0;
@@ -150,10 +150,10 @@ const applySpreadExemptMask = (
 /** Blend in uniform weights for tiles with distribute before spread-exempt masking. */
 const mergeDistributeUniformWeights = (
   normalizedSpatialWeights: { index: number; weight: number }[],
-  orderedTiles: ProcessedTile[]
+  orderedTiles: ProcessedTile[],
 ): { index: number; weight: number }[] => {
   const merged = normalizedSpatialWeights.map((w) =>
-    orderedTiles[w.index].distribute ? { ...w, weight: 1 } : w
+    orderedTiles[w.index].distribute ? { ...w, weight: 1 } : w,
   );
   const sum = merged.reduce((s, w) => s + w.weight, 0);
   if (sum <= 0) {
@@ -165,7 +165,7 @@ const mergeDistributeUniformWeights = (
 const pickTileByNormalizedWeights = (
   normalizedWeights: { index: number; weight: number }[],
   orderedTiles: ProcessedTile[],
-  fallbackIndex: number
+  fallbackIndex: number,
 ): ProcessedTile => {
   const rand = Math.random();
   let cumulative = 0;
@@ -191,7 +191,10 @@ export const traverseAndRemoveFills = (element: Element) => {
  * Gamma-style remap on linear opacity [0, 1]. Lower sigma → sharper ramp (more contrast);
  * higher sigma → closer to linear (1.0 = identity).
  */
-export const applyOpacitySigma = (raw: number, opacitySigma: number): number => {
+export const applyOpacitySigma = (
+  raw: number,
+  opacitySigma: number,
+): number => {
   const s = Math.max(0.01, Math.min(1, opacitySigma));
   const t = Math.max(0, Math.min(1, raw));
   return Math.pow(t, 1 / s);
@@ -212,7 +215,7 @@ export const applyOpacityContrast = (raw: number, contrast: number): number => {
 /** Uniform noise in [-opacityRandomness, +opacityRandomness], then clamped to [0, 1]. */
 export const applyOpacityRandomness = (
   base: number,
-  opacityRandomness: number
+  opacityRandomness: number,
 ): number => {
   const r = Math.max(0, Math.min(1, opacityRandomness));
   if (r <= 0) return base;
@@ -227,7 +230,7 @@ export const getOpacityForPosition = (
   col: number,
   gridSize: number,
   opacitySigma: number,
-  opacityContrast: number
+  opacityContrast: number,
 ): number => {
   if (opacity === "uniform") return 1;
 
@@ -236,7 +239,7 @@ export const getOpacityForPosition = (
     const raw = row / (gridSize - 1);
     return applyOpacitySigma(
       applyOpacityContrast(raw, opacityContrast),
-      opacitySigma
+      opacitySigma,
     );
   }
 
@@ -262,7 +265,7 @@ export const getOpacityForPosition = (
     const raw = opacity === "orb-inverted" ? 1 - t : t;
     return applyOpacitySigma(
       applyOpacityContrast(raw, opacityContrast),
-      opacitySigma
+      opacitySigma,
     );
   }
 
@@ -283,14 +286,14 @@ export const getOpacityForPosition = (
     for (const [px, py] of corners) {
       maxManhattan = Math.max(
         maxManhattan,
-        Math.abs(px - cx) + Math.abs(py - cy)
+        Math.abs(px - cx) + Math.abs(py - cy),
       );
     }
     if (maxManhattan <= 0) return applyOpacitySigma(1, opacitySigma);
     const raw = Math.max(0, Math.min(1, 1 - manhattan / maxManhattan));
     return applyOpacitySigma(
       applyOpacityContrast(raw, opacityContrast),
-      opacitySigma
+      opacitySigma,
     );
   }
 
@@ -309,7 +312,7 @@ export const generateTiledSVG = (
   opacity: OpacityType,
   opacitySigma: number,
   opacityRandomness: number,
-  opacityContrast: number
+  opacityContrast: number,
 ): string => {
   const svgWidth = gridSize * tileSize;
   const svgHeight = gridSize * tileSize;
@@ -325,13 +328,13 @@ export const generateTiledSVG = (
         col,
         gridSize,
         shape,
-        shapeSpread
+        shapeSpread,
       );
 
       const patternRotation = getRotationAngle(rotation, row, col, gridSize);
       const tileOffset = getTileRotationOffset(
         selectedTile.tileRotationDeg,
-        rotationRandomness
+        rotationRandomness,
       );
       const rotationAngle = patternRotation + tileOffset;
 
@@ -354,7 +357,7 @@ export const generateTiledSVG = (
         col,
         gridSize,
         opacitySigma,
-        opacityContrast
+        opacityContrast,
       );
       cellOpacity = applyOpacityRandomness(cellOpacity, opacityRandomness);
 
@@ -412,7 +415,7 @@ export const extractInnerSVG = (tile: Tile, tileSize: number): string => {
   const translateY = (24 - origHeight * scale) / 2;
   g.setAttribute(
     "transform",
-    `translate(${translateX}, ${translateY}) scale(${scale})`
+    `translate(${translateX}, ${translateY}) scale(${scale})`,
   );
 
   while (svgElement.firstChild) {
@@ -442,7 +445,7 @@ export const extractInnerSVG = (tile: Tile, tileSize: number): string => {
 
 export const processUploadedTiles = (
   tiles: Tile[],
-  tileSize: number
+  tileSize: number,
 ): ProcessedTile[] => {
   return tiles.map((tile) => {
     const processedSVG = extractInnerSVG(tile, tileSize);
@@ -460,7 +463,7 @@ export const selectTileForPosition = (
   col: number,
   gridSize: number,
   shape: ShapeType,
-  shapeSpread: number
+  shapeSpread: number,
 ): ProcessedTile => {
   switch (shape) {
     case "random":
@@ -488,7 +491,7 @@ export const selectTileCircle = (
   row: number,
   col: number,
   gridSize: number,
-  shapeSpread: number
+  shapeSpread: number,
 ): ProcessedTile => {
   const centerX = gridSize / 2;
   const centerY = gridSize / 2;
@@ -515,7 +518,7 @@ export const selectTileCircle = (
 
   const idealRingIndex = getIdealCircleRingIndex(
     cumulativeAreaPercentage,
-    numTiles
+    numTiles,
   );
 
   // Gaussian spread for ring weights (shapeSpread controls transition width)
@@ -541,13 +544,13 @@ export const selectTileCircle = (
   const normalizedWeights = applySpreadExemptMask(
     mergedSpatial,
     orderedTiles,
-    idealRingIndex
+    idealRingIndex,
   );
 
   return pickTileByNormalizedWeights(
     normalizedWeights,
     orderedTiles,
-    idealRingIndex
+    idealRingIndex,
   );
 };
 
@@ -556,10 +559,9 @@ export const selectTileGradient = (
   tiles: ProcessedTile[],
   row: number,
   gridSize: number,
-  shapeSpread: number
+  shapeSpread: number,
 ): ProcessedTile => {
-  const normalizedRow =
-    gridSize <= 1 ? 0 : row / (gridSize - 1); // 0 at top, 1 at bottom
+  const normalizedRow = gridSize <= 1 ? 0 : row / (gridSize - 1); // 0 at top, 1 at bottom
 
   // Tile order follows the user’s list order (first = top of gradient)
   const orderedTiles = tiles.slice();
@@ -570,9 +572,7 @@ export const selectTileGradient = (
   // Precompute the positions for each tile along the gradient
   const tilePositions = [];
   for (let i = 0; i < numTiles; i++) {
-    tilePositions.push(
-      numTiles <= 1 ? 0 : i / (numTiles - 1)
-    ); // Positions from 0 to 1
+    tilePositions.push(numTiles <= 1 ? 0 : i / (numTiles - 1)); // Positions from 0 to 1
   }
 
   // Calculate weights for each tile using Gaussian function
@@ -596,13 +596,13 @@ export const selectTileGradient = (
   const normalizedWeights = applySpreadExemptMask(
     mergedSpatial,
     orderedTiles,
-    idealTileIndex
+    idealTileIndex,
   );
 
   return pickTileByNormalizedWeights(
     normalizedWeights,
     orderedTiles,
-    idealTileIndex
+    idealTileIndex,
   );
 };
 
@@ -611,7 +611,7 @@ export const selectTileExponential = (
   row: number,
   col: number,
   gridSize: number,
-  shapeSpread: number
+  shapeSpread: number,
 ): ProcessedTile => {
   const orderedTiles = tiles.slice();
   const n = orderedTiles.length;
@@ -620,7 +620,7 @@ export const selectTileExponential = (
     row,
     col,
     gridSize,
-    shapeSpread
+    shapeSpread,
   );
 
   const normalizedRow = row / Math.max(1, gridSize - 1);
@@ -663,13 +663,13 @@ export const selectTileExponential = (
   const normalizedWeights = applySpreadExemptMask(
     preMask,
     orderedTiles,
-    idealGlobalIndex
+    idealGlobalIndex,
   );
 
   return pickTileByNormalizedWeights(
     normalizedWeights,
     orderedTiles,
-    idealGlobalIndex
+    idealGlobalIndex,
   );
 };
 
@@ -684,7 +684,7 @@ export const randomQuarterTurn = (): number =>
  */
 export const getTileRotationOffset = (
   tileRotationDeg: number | undefined,
-  rotationRandomness: number
+  rotationRandomness: number,
 ): number => {
   const r = Math.max(0, Math.min(1, rotationRandomness));
   if (r <= 0) return tileRotationDeg ?? 0;
@@ -697,7 +697,7 @@ export const getRotationAngle = (
   rotation: RotationType,
   row: number,
   col: number,
-  gridSize: number
+  gridSize: number,
 ): number => {
   const centerX = gridSize / 2;
   const centerY = gridSize / 2;
