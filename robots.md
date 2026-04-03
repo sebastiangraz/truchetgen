@@ -4,7 +4,7 @@ This document describes what the main React entry component does so humans and a
 
 ## Purpose
 
-`App.tsx` exports a single default component, **`TruchetGenerator`**, which is a **Truchet-tile pattern generator**. Users upload one or more SVG files (or add placeholder “empty” tiles). The app tiles and transforms those graphics into a larger grid-based SVG preview and offers a **download** of the result.
+`App.tsx` exports a single default component, **`TruchetGenerator`**, which is a **Truchet-tile pattern generator**. Users upload one or more SVG files and/or add tiles from the **default** catalog (including a built-in empty tile). The app tiles and transforms those graphics into a larger grid-based SVG preview and offers a **download** of the result.
 
 ## Data flow
 
@@ -32,7 +32,7 @@ This document describes what the main React entry component does so humans and a
 | **Download SVG** | Link with `data:image/svg+xml;base64,...` and a filename derived from shape, sigma, and grid size. |
 | Per-tile preview | Click preview to **delete** that tile. |
 | Per-tile **Busyness** (number 0–10) | Updates that tile’s weighting for pattern generation. |
-| **Empty tile** | Appends a transparent 24×24 empty SVG tile named `empty`. |
+| **Default tiles** catalog | Preloaded SVGs from `src/assets/tiles` (sorted); the first entry is always a transparent **empty** tile (`empty`) users can add like any other catalog item. |
 | **Shape** / **Rotation** | Selects tiling / variation strategy for `generateTiledSVG`. |
 | **Grid Size** slider | Sets N for an N×N grid (labeled in the UI). |
 | **Sigma** slider | Adjusts the sigma parameter (shown to two decimal places). |

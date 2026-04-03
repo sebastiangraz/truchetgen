@@ -1,8 +1,20 @@
 import type { Tile } from "../types";
 
+const EMPTY_TILE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect width="24" height="24" fill="none" /></svg>`;
+
+/** Stable id for the built-in transparent tile (first in the catalog). */
+export const PRELOADED_EMPTY_TILE_ID = "preloaded-empty";
+
+const emptyCatalogTile: Tile = {
+  id: PRELOADED_EMPTY_TILE_ID,
+  fileName: "empty",
+  svg: EMPTY_TILE_SVG,
+};
+
 /**
  * Preloaded SVGs from `src/assets/tiles/*.svg` (bundled at build time).
  * Add or replace files in that folder; order follows sorted paths.
+ * The empty transparent tile is always listed first.
  */
 const rawTileModules = import.meta.glob<string>("../assets/tiles/*.svg", {
   eager: true,
@@ -23,7 +35,7 @@ export const getPreloadedTiles = (): Tile[] => {
     a.localeCompare(b, undefined, { sensitivity: "base" })
   );
 
-  return paths.map((path) => {
+  const fromAssets = paths.map((path) => {
     const svg = rawTileModules[path];
     return {
       id: pathToStableId(path),
@@ -31,4 +43,6 @@ export const getPreloadedTiles = (): Tile[] => {
       svg,
     };
   });
+
+  return [emptyCatalogTile, ...fromAssets];
 };

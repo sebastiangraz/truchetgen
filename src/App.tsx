@@ -8,7 +8,10 @@ import {
 } from "react";
 import { generateTiledSVG, processUploadedTiles } from "./utils/svgutils";
 import { handleFileUpload } from "./utils/fileutils";
-import { getPreloadedTiles } from "./utils/defaultTiles";
+import {
+  getPreloadedTiles,
+  PRELOADED_EMPTY_TILE_ID,
+} from "./utils/defaultTiles";
 import { Tile, ShapeType, RotationType } from "./types";
 
 import "./styles.css";
@@ -58,6 +61,10 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
   const dragFromIndex = useRef<number | null>(null);
 
   const catalogTiles = useMemo(() => getPreloadedTiles(), []);
+  const hasAssetCatalogTiles = useMemo(
+    () => catalogTiles.some((t) => t.id !== PRELOADED_EMPTY_TILE_ID),
+    [catalogTiles],
+  );
 
   const processedCatalogTiles = useMemo(
     () => processUploadedTiles(catalogTiles, tileSize),
@@ -168,22 +175,6 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
     localStorage.removeItem("uploadedTiles");
   };
 
-  const addEmptyTile = () => {
-    const emptySvgContent = `
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-        <rect width="24" height="24" fill="none" />
-      </svg>
-    `;
-
-    const newTile: Tile = {
-      id: crypto.randomUUID(),
-      svg: emptySvgContent,
-      fileName: "empty",
-    };
-
-    setActiveTiles((prevTiles) => [...prevTiles, newTile]);
-  };
-
   const displayName = (fileName: string) =>
     fileName.substring(0, fileName.lastIndexOf(".")) || fileName;
 
@@ -273,34 +264,33 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
 
         <div className="app-grid__cell app-grid__cell--catalog tiles-column tiles-column--catalog">
           <p className="tiles-column-heading">Default tiles</p>
-          {catalogTiles.length === 0 ? (
+          {!hasAssetCatalogTiles && (
             <p className="tiles-column-empty">No assets in src/assets/tiles</p>
-          ) : (
-            <ul className="default-tile-list">
-              {catalogTiles.map((tile, index) => {
-                const processedSVG =
-                  processedCatalogTiles[index]?.processedSVG || "";
-                return (
-                  <li key={tile.id}>
-                    <button
-                      type="button"
-                      className="default-tile-item"
-                      onClick={() => addCatalogTileToActive(tile)}
-                      title="Add to sequence"
-                    >
-                      <div
-                        className="default-tile-thumb"
-                        dangerouslySetInnerHTML={{ __html: processedSVG }}
-                      />
-                      <span className="default-tile-name">
-                        {displayName(tile.fileName)}
-                      </span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
           )}
+          <ul className="default-tile-list">
+            {catalogTiles.map((tile, index) => {
+              const processedSVG =
+                processedCatalogTiles[index]?.processedSVG || "";
+              return (
+                <li key={tile.id}>
+                  <button
+                    type="button"
+                    className="default-tile-item"
+                    onClick={() => addCatalogTileToActive(tile)}
+                    title="Add to sequence"
+                  >
+                    <div
+                      className="default-tile-thumb"
+                      dangerouslySetInnerHTML={{ __html: processedSVG }}
+                    />
+                    <span className="default-tile-name">
+                      {displayName(tile.fileName)}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
         </div>
         <div className="app-grid__cell app-grid__cell--active tiles-column tiles-column--active">
           <p className="tiles-column-heading">Tiles in use</p>
@@ -349,13 +339,6 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                 })}
               </div>
             )}
-            <button
-              type="button"
-              className="tile-empty-add"
-              onClick={addEmptyTile}
-            >
-              Empty tile
-            </button>
             <div>
               <span onClick={clearAllTiles} className="clear-all-button">
                 Clear All Tiles
