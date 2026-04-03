@@ -582,13 +582,15 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
       {error && <p className={styles.error}>{error}</p>}
 
       {activeTiles.length > 0 && (
-        <div className={styles.previewSection}>
-          {tiledSVG && (
-            <div
-              className={styles.previewFrame}
-              dangerouslySetInnerHTML={{ __html: tiledSVG }}
-            />
-          )}
+        <>
+          <div>
+            {tiledSVG && (
+              <div
+                className={styles.previewFrame}
+                dangerouslySetInnerHTML={{ __html: tiledSVG }}
+              />
+            )}
+          </div>{" "}
           <a
             className={styles.download}
             target="_blank"
@@ -597,7 +599,7 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
           >
             Download SVG
           </a>
-        </div>
+        </>
       )}
     </div>
   );
