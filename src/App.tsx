@@ -347,7 +347,10 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
           <div className={styles.ranges}>
             <div className={styles.rangeRow}>
               <label htmlFor="gridSize">
-                Grid Size {gridSize}x{gridSize}
+                Grid Size{" "}
+                <span className={styles.accent}>
+                  {gridSize}x{gridSize}
+                </span>
               </label>
               <input
                 type="range"
@@ -361,7 +364,8 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
             </div>
             <div className={styles.rangeRow}>
               <label htmlFor="shapeSpread">
-                Shape Spread {shapeSpread.toFixed(2)}
+                Shape Spread{" "}
+                <span className={styles.accent}>{shapeSpread.toFixed(2)}</span>
               </label>
               <input
                 type="range"
@@ -376,7 +380,10 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
             </div>
             <div className={styles.rangeRow}>
               <label htmlFor="rotationRandomness">
-                Rotation Randomness {rotationRandomness.toFixed(2)}
+                Rotation Randomness{" "}
+                <span className={styles.accent}>
+                  {rotationRandomness.toFixed(2)}
+                </span>
               </label>
               <input
                 type="range"
@@ -392,7 +399,10 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
             {opacity !== "uniform" && (
               <div className={styles.rangeRow}>
                 <label htmlFor="opacitySigma">
-                  Opacity Sigma {opacitySigma.toFixed(2)}
+                  Opacity Sigma{" "}
+                  <span className={styles.accent}>
+                    {opacitySigma.toFixed(2)}
+                  </span>
                 </label>
                 <input
                   type="range"
@@ -408,7 +418,10 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
             )}
             <div className={styles.rangeRow}>
               <label htmlFor="opacityRandomness">
-                Opacity Randomness {opacityRandomness.toFixed(2)}
+                Opacity Randomness{" "}
+                <span className={styles.accent}>
+                  {opacityRandomness.toFixed(2)}
+                </span>
               </label>
               <input
                 type="range"
@@ -448,7 +461,7 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
           {!hasAssetCatalogTiles && (
             <p className={styles.panelLabel}>No assets in src/assets/tiles</p>
           )}
-          <ul className={styles.list}>
+          <ul className={styles.tiles}>
             {catalogTiles.map((tile, index) => {
               const processedSVG =
                 processedCatalogTiles[index]?.processedSVG || "";
@@ -486,7 +499,7 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
           <p className={styles.panelLabel}>Tiles in use</p>
           <div className={styles.panelBody}>
             {activeTiles.length > 0 && (
-              <div className={styles.sequence}>
+              <div className={styles.tiles}>
                 {activeTiles.map((tile, index) => {
                   const processedSVG =
                     processedTiles[index]?.processedSVG || "";
@@ -512,7 +525,6 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                           title="Drag to reorder"
                         >
                           <div
-                            className={styles.graphic}
                             style={{
                               transform: `rotate(${tileDeg}deg)`,
                               transformOrigin: "center center",
@@ -566,17 +578,27 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                 })}
               </div>
             )}
-            <div className={styles.toolbar}>
+            <div className={styles.buttons}>
               <button
                 type="button"
-                className={`${styles.barButton} ${styles.barButtonAccent}`}
+                style={
+                  {
+                    "--accent": "hsla(145, 45%, 32%, 1)",
+                  } as React.CSSProperties
+                }
+                className={`${styles.button} `}
                 onClick={resetAllRotations}
               >
                 Reset all rotations
               </button>
               <button
                 type="button"
-                className={`${styles.barButton} ${styles.barButtonDanger}`}
+                style={
+                  {
+                    "--accent": "hsla(0, 60%, 35%, 1)",
+                  } as React.CSSProperties
+                }
+                className={`${styles.button}`}
                 onClick={clearAllTiles}
               >
                 Clear All Tiles
@@ -597,9 +619,9 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                 dangerouslySetInnerHTML={{ __html: tiledSVG }}
               />
             )}
-          </div>{" "}
+          </div>
           <a
-            className={styles.download}
+            className={`${styles.button}`}
             target="_blank"
             href={`data:image/svg+xml;base64,${btoa(tiledSVG)}`}
             download={`${shape}-o${opacity}-os${opacitySigma}-ornd${opacityRandomness}-oc${opacityContrast}-spread${shapeSpread}-rr${rotationRandomness}-${gridSize}x${gridSize}-truchet.svg`}

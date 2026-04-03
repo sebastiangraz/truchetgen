@@ -5,36 +5,6 @@
   padding-top: 0.5em;
 }
 
-/* Spread-exempt: subtle X overlay (not in generated SVG) */
-.spreadExempt {
-  position: relative;
-
-  &::before,
-  &::after {
-    content: "";
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: 1px;
-    height: 72%;
-    margin-left: -0.5px;
-    margin-top: -36%;
-    background: hsl(220 8% 42% / 0.28);
-    pointer-events: none;
-    z-index: 1;
-    border-radius: 0.5px;
-  }
-
-  &::before {
-    transform: rotate(45deg);
-  }
-
-  &::after {
-    transform: rotate(-45deg);
-  }
-}
-
-/* Default catalog + “tiles in use”: one row layout (thumb + meta) */
 .tile {
   display: flex;
   flex-direction: column;
@@ -172,6 +142,10 @@
   width: 100%;
   min-width: 0;
 
+  .accent {
+    color: hsl(0 0% 0% / 0.55);
+  }
+
   .rangeRow {
     grid-column: 1 / -1;
     display: grid;
@@ -192,16 +166,6 @@
 }
 
 .catalog {
-  .list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: grid;
-    grid-template-columns: repeat(6, minmax(0, auto));
-    gap: 1em;
-    justify-content: flex-start;
-  }
-
   .pick {
     display: flex;
     width: 100%;
@@ -212,15 +176,7 @@
     cursor: pointer;
     font-size: inherit;
     text-align: left;
-
-    /* &:hover .tileThumb {
-      background: hsl(0 0% 0% / 0.04);
-    } */
   }
-
-  /* .tileThumb svg {
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
-  } */
 }
 
 .panelBody {
@@ -232,17 +188,19 @@
   min-height: 80px;
 }
 
-.sequence {
+.tiles {
   width: 100%;
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(3rem, auto));
+  list-style: none;
+  padding: 0;
+  margin: 0;
   justify-content: flex-start;
   align-content: flex-start;
   gap: 1em;
 
   .card {
     position: relative;
-    background: #eee;
     min-width: 0;
   }
 
@@ -316,34 +274,23 @@
   }
 }
 
-.toolbar {
+.buttons {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.75em 1em;
+  gap: 0.75em;
+}
 
-  .barButton {
-    padding: 0;
-    border: none;
-    background: none;
-    font: inherit;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-    cursor: pointer;
-    color: hsl(0 0% 35%);
-    transition: color 0.12s ease;
-  }
+.button {
+  --accent: hsla(0, 0%, 0%, 0.5);
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
 
-  .barButtonAccent:hover {
-    color: hsl(210 55% 32%);
-  }
-
-  .barButtonDanger {
-    color: hsl(0 0% 40%);
-  }
-
-  .barButtonDanger:hover {
-    color: hsl(0 60% 35%);
+  &:hover {
+    color: var(--accent);
   }
 }
 
@@ -365,4 +312,32 @@
 
 .error {
   color: red;
+}
+
+.spreadExempt {
+  position: relative;
+
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 1px;
+    height: 72%;
+    margin-left: -0.5px;
+    margin-top: -36%;
+    background: hsl(220 8% 42% / 0.28);
+    pointer-events: none;
+    z-index: 1;
+    border-radius: 0.5px;
+  }
+
+  &::before {
+    transform: rotate(45deg);
+  }
+
+  &::after {
+    transform: rotate(-45deg);
+  }
 }
