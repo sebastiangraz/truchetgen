@@ -106,6 +106,10 @@
     grid-area: title;
     align-items: start;
     justify-content: space-between;
+    h1 {
+      letter-spacing: -0.025em;
+      line-height: 0.9;
+    }
   }
 
   .cellControls {
