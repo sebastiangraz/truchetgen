@@ -38,18 +38,18 @@ const parseStoredTiles = (raw: string): Tile[] => {
   }
 };
 
-const readInitialTiles = (): Tile[] => {
+const readInitialActiveTiles = (): Tile[] => {
   if (typeof window === "undefined") return [];
   const stored = localStorage.getItem("uploadedTiles");
-  if (stored) {
-    const parsed = parseStoredTiles(stored);
-    if (parsed.length > 0) return parsed;
-  }
-  return getPreloadedTiles();
+  if (!stored) return [];
+  const parsed = parseStoredTiles(stored);
+  return parsed.length > 0 ? parsed : [];
 };
 
 const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
-  const [uploadedTiles, setUploadedTiles] = useState<Tile[]>(readInitialTiles);
+  const [activeTiles, setActiveTiles] = useState<Tile[]>(
+    readInitialActiveTiles,
+  );
   const [error, setError] = useState<string>("");
   const [gridSize, setGridSize] = useState<number>(8);
   const [shape, setShape] = useState<ShapeType>("random");
@@ -57,18 +57,25 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
   const [sigma, setSigma] = useState<number>(0.15);
   const dragFromIndex = useRef<number | null>(null);
 
+  const catalogTiles = useMemo(() => getPreloadedTiles(), []);
+
+  const processedCatalogTiles = useMemo(
+    () => processUploadedTiles(catalogTiles, tileSize),
+    [catalogTiles, tileSize],
+  );
+
   useEffect(() => {
-    localStorage.setItem("uploadedTiles", JSON.stringify(uploadedTiles));
-  }, [uploadedTiles]);
+    localStorage.setItem("uploadedTiles", JSON.stringify(activeTiles));
+  }, [activeTiles]);
 
   const processedTiles = useMemo(
-    () => processUploadedTiles(uploadedTiles, tileSize),
-    [uploadedTiles, tileSize]
+    () => processUploadedTiles(activeTiles, tileSize),
+    [activeTiles, tileSize],
   );
 
   const tilesForGeneration = useMemo(
     () => processedTiles.filter((t) => t.processedSVG.trim() !== ""),
-    [processedTiles]
+    [processedTiles],
   );
 
   const tiledSVG = useMemo(() => {
@@ -80,7 +87,7 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
       tileSize,
       shape,
       rotation,
-      sigma
+      sigma,
     );
   }, [tilesForGeneration, gridSize, tileSize, shape, rotation, sigma]);
 
@@ -104,9 +111,20 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
     setSigma(newSigma);
   };
 
+  const addCatalogTileToActive = (tile: Tile) => {
+    setActiveTiles((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        svg: tile.svg,
+        fileName: tile.fileName,
+      },
+    ]);
+  };
+
   const reorderTiles = (from: number, to: number) => {
     if (from === to) return;
-    setUploadedTiles((prev) => {
+    setActiveTiles((prev) => {
       const next = [...prev];
       const [removed] = next.splice(from, 1);
       next.splice(to, 0, removed);
@@ -125,21 +143,20 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
     e.dataTransfer.dropEffect = "move";
   };
 
-  const handleDrop =
-    (dropIndex: number) => (e: DragEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      const from = dragFromIndex.current;
-      dragFromIndex.current = null;
-      if (from === null || from === dropIndex) return;
-      reorderTiles(from, dropIndex);
-    };
+  const handleDrop = (dropIndex: number) => (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const from = dragFromIndex.current;
+    dragFromIndex.current = null;
+    if (from === null || from === dropIndex) return;
+    reorderTiles(from, dropIndex);
+  };
 
   const handleDragEnd = () => {
     dragFromIndex.current = null;
   };
 
   const deleteTile = (index: number) => {
-    setUploadedTiles((prevTiles) => {
+    setActiveTiles((prevTiles) => {
       const updatedTiles = [...prevTiles];
       updatedTiles.splice(index, 1);
       return updatedTiles;
@@ -147,7 +164,7 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
   };
 
   const clearAllTiles = () => {
-    setUploadedTiles([]);
+    setActiveTiles([]);
     localStorage.removeItem("uploadedTiles");
   };
 
@@ -164,8 +181,11 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
       fileName: "empty",
     };
 
-    setUploadedTiles((prevTiles) => [...prevTiles, newTile]);
+    setActiveTiles((prevTiles) => [...prevTiles, newTile]);
   };
+
+  const displayName = (fileName: string) =>
+    fileName.substring(0, fileName.lastIndexOf(".")) || fileName;
 
   return (
     <div className="generator">
@@ -175,74 +195,14 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
             Truchet
             <br /> Generator
           </h1>
-          <hr />
-          <span onClick={clearAllTiles} className="clear-all-button">
-            Clear All Tiles
-          </span>
-          <a
-            target="_blank"
-            href={`data:image/svg+xml;base64,${btoa(tiledSVG)}`}
-            download={`${shape}-s${sigma}-${gridSize}x${gridSize}-truchet.svg`}
-          >
-            Download SVG
-          </a>{" "}
         </div>
         <div className="upload-container">
           <input
             type="file"
             accept=".svg"
             multiple
-            onChange={(e) => handleFileUpload(e, setUploadedTiles, setError)}
+            onChange={(e) => handleFileUpload(e, setActiveTiles, setError)}
           />
-        </div>
-        <div className="uploaded-tiles">
-          {uploadedTiles.length > 0 && (
-            <div className="tile-list">
-              {uploadedTiles.map((tile, index) => {
-                const processedSVG = processedTiles[index]?.processedSVG || "";
-                const fileName =
-                  tile.fileName.substring(0, tile.fileName.lastIndexOf(".")) ||
-                  tile.fileName;
-                return (
-                  <div
-                    key={tile.id}
-                    className="tile-item"
-                    onDragOver={handleDragOver}
-                    onDrop={handleDrop(index)}
-                  >
-                    <div className="tile-item-body">
-                      <div
-                        className="tile-svg-wrap"
-                        draggable
-                        onDragStart={handleDragStart(index)}
-                        onDragEnd={handleDragEnd}
-                        title="Drag to reorder"
-                      >
-                        <div
-                          className="tile-svg"
-                          dangerouslySetInnerHTML={{ __html: processedSVG }}
-                        />
-                        <span className="tile-drag-icon" aria-hidden="true">
-                          ⋮⋮
-                        </span>
-                      </div>
-                      <p className="file-name">{fileName}</p>
-                      <button
-                        type="button"
-                        className="tile-delete"
-                        onClick={() => deleteTile(index)}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-          <span onClick={addEmptyTile} className="empty">
-            Empty tile
-          </span>
         </div>
         <div className="multi-container">
           <div>
@@ -303,16 +263,121 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
           </div>
         </div>
       </div>
+
+      <div className="tiles-row">
+        <div className="tiles-column tiles-column--catalog">
+          <p className="tiles-column-heading">Default tiles</p>
+          {catalogTiles.length === 0 ? (
+            <p className="tiles-column-empty">No assets in src/assets/tiles</p>
+          ) : (
+            <ul className="default-tile-list">
+              {catalogTiles.map((tile, index) => {
+                const processedSVG =
+                  processedCatalogTiles[index]?.processedSVG || "";
+                return (
+                  <li key={tile.id}>
+                    <button
+                      type="button"
+                      className="default-tile-item"
+                      onClick={() => addCatalogTileToActive(tile)}
+                      title="Add to sequence"
+                    >
+                      <div
+                        className="default-tile-thumb"
+                        dangerouslySetInnerHTML={{ __html: processedSVG }}
+                      />
+                      <span className="default-tile-name">
+                        {displayName(tile.fileName)}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+        <div className="tiles-column tiles-column--active">
+          <p className="tiles-column-heading">Tiles in use</p>
+          <div className="active-tiles-inner">
+            {activeTiles.length > 0 && (
+              <div className="tile-list">
+                {activeTiles.map((tile, index) => {
+                  const processedSVG =
+                    processedTiles[index]?.processedSVG || "";
+                  return (
+                    <div
+                      key={tile.id}
+                      className="tile-item"
+                      onDragOver={handleDragOver}
+                      onDrop={handleDrop(index)}
+                    >
+                      <div className="tile-item-body">
+                        <div
+                          className="tile-svg-wrap"
+                          draggable
+                          onDragStart={handleDragStart(index)}
+                          onDragEnd={handleDragEnd}
+                          title="Drag to reorder"
+                        >
+                          <div
+                            className="tile-svg"
+                            dangerouslySetInnerHTML={{ __html: processedSVG }}
+                          />
+                          <span className="tile-drag-icon" aria-hidden="true">
+                            ⋮⋮
+                          </span>
+                        </div>
+                        <p className="file-name">
+                          {displayName(tile.fileName)}
+                        </p>
+                        <button
+                          type="button"
+                          className="tile-delete"
+                          onClick={() => deleteTile(index)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            <button
+              type="button"
+              className="tile-empty-add"
+              onClick={addEmptyTile}
+            >
+              Empty tile
+            </button>
+            <div>
+              <span onClick={clearAllTiles} className="clear-all-button">
+                Clear All Tiles
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {error && <p className="error">{error}</p>}
 
-      {uploadedTiles.length > 0 && (
-        <div className="output">
-          {tiledSVG && (
-            <div
-              className="svg-container"
-              dangerouslySetInnerHTML={{ __html: tiledSVG }}
-            />
-          )}
+      {activeTiles.length > 0 && (
+        <div>
+          <div className="output">
+            {tiledSVG && (
+              <div
+                className="svg-container"
+                dangerouslySetInnerHTML={{ __html: tiledSVG }}
+              />
+            )}
+          </div>
+          <a
+            target="_blank"
+            href={`data:image/svg+xml;base64,${btoa(tiledSVG)}`}
+            download={`${shape}-s${sigma}-${gridSize}x${gridSize}-truchet.svg`}
+          >
+            Download SVG
+          </a>
         </div>
       )}
     </div>
