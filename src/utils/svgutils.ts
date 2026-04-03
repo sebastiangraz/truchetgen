@@ -35,23 +35,17 @@ export const getIdealCircleRingIndex = (
   return best;
 };
 
-/** Nearest tile index along vertical gradient (targets at i/(n-1)). */
+/**
+ * Tile index for gradient mode: equal row bands (each tile gets ⌊G/n⌋ or ⌈G/n⌉ rows).
+ * Contrasts with nearest-neighbor to targets at i/(n−1), which shrinks end tiles’ bands on [0,1].
+ */
 export const getIdealGradientTileIndex = (
-  normalizedRow: number,
+  row: number,
+  gridSize: number,
   numTiles: number,
 ): number => {
-  if (numTiles <= 1) return 0;
-  let best = 0;
-  let bestDiff = Infinity;
-  for (let i = 0; i < numTiles; i++) {
-    const target = i / (numTiles - 1);
-    const d = Math.abs(normalizedRow - target);
-    if (d < bestDiff) {
-      bestDiff = d;
-      best = i;
-    }
-  }
-  return best;
+  if (numTiles <= 1 || gridSize <= 0) return 0;
+  return Math.min(numTiles - 1, Math.floor((row * numTiles) / gridSize));
 };
 
 /**
@@ -567,12 +561,12 @@ export const selectTileGradient = (
   const orderedTiles = tiles.slice();
   const numTiles = orderedTiles.length;
 
-  const idealTileIndex = getIdealGradientTileIndex(normalizedRow, numTiles);
+  const idealTileIndex = getIdealGradientTileIndex(row, gridSize, numTiles);
 
-  // Precompute the positions for each tile along the gradient
+  // Gaussian centers evenly in [0, 1] (midpoints of equal row bands in the limit G→∞)
   const tilePositions = [];
   for (let i = 0; i < numTiles; i++) {
-    tilePositions.push(numTiles <= 1 ? 0 : i / (numTiles - 1)); // Positions from 0 to 1
+    tilePositions.push(numTiles <= 1 ? 0 : (i + 0.5) / numTiles);
   }
 
   // Calculate weights for each tile using Gaussian function
