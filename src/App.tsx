@@ -8,6 +8,7 @@ import {
 } from "react";
 import { generateTiledSVG, processUploadedTiles } from "./utils/svgutils";
 import { handleFileUpload } from "./utils/fileutils";
+import { getPreloadedTiles } from "./utils/defaultTiles";
 import { Tile, ShapeType, RotationType } from "./types";
 
 import "./styles.css";
@@ -37,21 +38,24 @@ const parseStoredTiles = (raw: string): Tile[] => {
   }
 };
 
+const readInitialTiles = (): Tile[] => {
+  if (typeof window === "undefined") return [];
+  const stored = localStorage.getItem("uploadedTiles");
+  if (stored) {
+    const parsed = parseStoredTiles(stored);
+    if (parsed.length > 0) return parsed;
+  }
+  return getPreloadedTiles();
+};
+
 const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
-  const [uploadedTiles, setUploadedTiles] = useState<Tile[]>([]);
+  const [uploadedTiles, setUploadedTiles] = useState<Tile[]>(readInitialTiles);
   const [error, setError] = useState<string>("");
   const [gridSize, setGridSize] = useState<number>(8);
   const [shape, setShape] = useState<ShapeType>("random");
   const [rotation, setRotation] = useState<RotationType>("default");
   const [sigma, setSigma] = useState<number>(0.15);
   const dragFromIndex = useRef<number | null>(null);
-
-  useEffect(() => {
-    const storedTiles = localStorage.getItem("uploadedTiles");
-    if (storedTiles) {
-      setUploadedTiles(parseStoredTiles(storedTiles));
-    }
-  }, []);
 
   useEffect(() => {
     localStorage.setItem("uploadedTiles", JSON.stringify(uploadedTiles));
