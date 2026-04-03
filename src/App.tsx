@@ -71,7 +71,8 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
   const [shape, setShape] = useState<ShapeType>("random");
   const [rotation, setRotation] = useState<RotationType>("default");
   const [opacity, setOpacity] = useState<OpacityType>("uniform");
-  const [sigma, setSigma] = useState<number>(0.15);
+  const [shapeSpread, setShapeSpread] = useState<number>(0.15);
+  const [rotationRandomness, setRotationRandomness] = useState<number>(0);
   const [opacitySigma, setOpacitySigma] = useState<number>(0.15);
   const [opacityRandomness, setOpacityRandomness] = useState<number>(0);
   const dragFromIndex = useRef<number | null>(null);
@@ -110,7 +111,8 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
       tileSize,
       shape,
       rotation,
-      sigma,
+      shapeSpread,
+      rotationRandomness,
       opacity,
       opacitySigma,
       opacityRandomness,
@@ -121,7 +123,8 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
     tileSize,
     shape,
     rotation,
-    sigma,
+    shapeSpread,
+    rotationRandomness,
     opacity,
     opacitySigma,
     opacityRandomness,
@@ -146,9 +149,12 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
     setOpacity(e.target.value as OpacityType);
   };
 
-  const handleSigmaChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const newSigma = parseFloat(e.target.value);
-    setSigma(newSigma);
+  const handleShapeSpreadChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setShapeSpread(parseFloat(e.target.value));
+  };
+
+  const handleRotationRandomnessChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setRotationRandomness(parseFloat(e.target.value));
   };
 
   const handleOpacitySigmaChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -328,16 +334,33 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
               />
             </div>
             <div>
-              <label htmlFor="sigma">Sigma {sigma.toFixed(2)}</label>
+              <label htmlFor="shapeSpread">
+                Shape Spread {shapeSpread.toFixed(2)}
+              </label>
               <input
                 type="range"
-                id="sigma"
-                name="sigma"
+                id="shapeSpread"
+                name="shapeSpread"
                 min="0.01"
                 max="1.0"
                 step="0.01"
-                value={sigma}
-                onChange={handleSigmaChange}
+                value={shapeSpread}
+                onChange={handleShapeSpreadChange}
+              />
+            </div>
+            <div>
+              <label htmlFor="rotationRandomness">
+                Rotation Randomness {rotationRandomness.toFixed(2)}
+              </label>
+              <input
+                type="range"
+                id="rotationRandomness"
+                name="rotationRandomness"
+                min="0"
+                max="1.0"
+                step="0.01"
+                value={rotationRandomness}
+                onChange={handleRotationRandomnessChange}
               />
             </div>
             <div>
@@ -499,7 +522,7 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
             className="download-svg-button"
             target="_blank"
             href={`data:image/svg+xml;base64,${btoa(tiledSVG)}`}
-            download={`${shape}-o${opacity}-os${opacitySigma}-ornd${opacityRandomness}-s${sigma}-${gridSize}x${gridSize}-truchet.svg`}
+            download={`${shape}-o${opacity}-os${opacitySigma}-ornd${opacityRandomness}-spread${shapeSpread}-rr${rotationRandomness}-${gridSize}x${gridSize}-truchet.svg`}
           >
             Download SVG
           </a>

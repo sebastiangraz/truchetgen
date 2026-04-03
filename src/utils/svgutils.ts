@@ -112,7 +112,8 @@ export const generateTiledSVG = (
   tileSize: number,
   shape: ShapeType,
   rotation: RotationType,
-  sigma: number,
+  shapeSpread: number,
+  rotationRandomness: number,
   opacity: OpacityType,
   opacitySigma: number,
   opacityRandomness: number
@@ -131,12 +132,15 @@ export const generateTiledSVG = (
         col,
         gridSize,
         shape,
-        sigma
+        shapeSpread
       );
 
       const patternRotation = getRotationAngle(rotation, row, col, gridSize);
-      const tileRotation = selectedTile.tileRotationDeg ?? 0;
-      const rotationAngle = patternRotation + tileRotation;
+      const tileOffset = getTileRotationOffset(
+        selectedTile.tileRotationDeg,
+        rotationRandomness
+      );
+      const rotationAngle = patternRotation + tileOffset;
 
       const xPos = col * tileSize;
       const yPos = row * tileSize;
@@ -262,17 +266,17 @@ export const selectTileForPosition = (
   col: number,
   gridSize: number,
   shape: ShapeType,
-  sigma: number
+  shapeSpread: number
 ): ProcessedTile => {
   switch (shape) {
     case "random":
       return selectTileRandom(tiles);
     case "circle":
-      return selectTileCircle(tiles, row, col, gridSize, sigma);
+      return selectTileCircle(tiles, row, col, gridSize, shapeSpread);
     case "gradient":
-      return selectTileGradient(tiles, row, gridSize, sigma);
+      return selectTileGradient(tiles, row, gridSize, shapeSpread);
     case "exponential":
-      return selectTileExponential(tiles, row, col, gridSize, sigma);
+      return selectTileExponential(tiles, row, col, gridSize, shapeSpread);
     default:
       return selectTileRandom(tiles);
   }
@@ -290,7 +294,7 @@ export const selectTileCircle = (
   row: number,
   col: number,
   gridSize: number,
-  sigma: number
+  shapeSpread: number
 ): ProcessedTile => {
   const centerX = gridSize / 2;
   const centerY = gridSize / 2;
@@ -315,12 +319,12 @@ export const selectTileCircle = (
   const normalizedDistance = distance / totalRadius;
   const cumulativeAreaPercentage = normalizedDistance * normalizedDistance;
 
-  // Define sigma for the Gaussian (controls the amount of noise)
+  // Gaussian spread for ring weights (shapeSpread controls transition width)
 
   // Calculate weights for each ring using Gaussian function
   const weights = ringAreaPercentages.map((ringAreaPercentage, index) => {
     const diff = cumulativeAreaPercentage - ringAreaPercentage;
-    const exponent = -(diff * diff) / (2 * sigma * sigma);
+    const exponent = -(diff * diff) / (2 * shapeSpread * shapeSpread);
     const weight = Math.exp(exponent);
     return {
       index,
@@ -356,7 +360,7 @@ export const selectTileGradient = (
   tiles: ProcessedTile[],
   row: number,
   gridSize: number,
-  sigma: number // Accept sigma here
+  shapeSpread: number
 ): ProcessedTile => {
   const normalizedRow = row / (gridSize - 1); // 0 at top, 1 at bottom
 
@@ -373,7 +377,7 @@ export const selectTileGradient = (
   // Calculate weights for each tile using Gaussian function
   const weights = tilePositions.map((tilePosition, index) => {
     const diff = normalizedRow - tilePosition;
-    const exponent = -(diff * diff) / (2 * sigma * sigma);
+    const exponent = -(diff * diff) / (2 * shapeSpread * shapeSpread);
     const weight = Math.exp(exponent);
     return {
       index,
@@ -407,12 +411,12 @@ export const selectTileExponential = (
   row: number,
   col: number,
   gridSize: number,
-  sigma: number // Accept sigma here
+  shapeSpread: number
 ): ProcessedTile => {
   const normalizedRow = row / Math.max(1, gridSize - 1);
 
-  // Calculate exponent based on sigma
-  const exponent = (1 - sigma) * 4 + 1; // Exponent ranges from 5 to 1 as sigma goes from 0 to 1
+  // Exponent from shapeSpread (5 → 1 as spread goes 0 → 1)
+  const exponent = (1 - shapeSpread) * 4 + 1;
 
   const fractionOfBusyTiles = Math.pow(normalizedRow, exponent);
   const numBusyTiles = Math.round(fractionOfBusyTiles * gridSize);
@@ -437,6 +441,25 @@ export const selectTileExponential = (
     return emptyTiles[emptyIndex];
   }
   return selectTileRandom(tiles);
+};
+
+const QUARTER_TURNS = [0, 90, 180, -90] as const;
+
+export const randomQuarterTurn = (): number =>
+  QUARTER_TURNS[Math.floor(Math.random() * QUARTER_TURNS.length)];
+
+/**
+ * Per-tile rotation on top of pattern rotation. At 0, uses tileRotationDeg;
+ * at 1, ignores it and uses a random quarter turn; in between, probability blend.
+ */
+export const getTileRotationOffset = (
+  tileRotationDeg: number | undefined,
+  rotationRandomness: number
+): number => {
+  const r = Math.max(0, Math.min(1, rotationRandomness));
+  if (r <= 0) return tileRotationDeg ?? 0;
+  if (r >= 1) return randomQuarterTurn();
+  return Math.random() < r ? randomQuarterTurn() : (tileRotationDeg ?? 0);
 };
 
 // 8. Get Rotation Angle
