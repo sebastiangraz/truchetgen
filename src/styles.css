@@ -71,7 +71,7 @@
   display: grid;
   grid-template-columns: repeat(6, minmax(0, auto));
   gap: 1em;
-  justify-content: space-between;
+  justify-content: flex-start;
 }
 .default-tile-item {
   display: flex;
