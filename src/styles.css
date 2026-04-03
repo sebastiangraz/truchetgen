@@ -10,10 +10,48 @@
 .tile-item {
   position: relative;
   background: #eee;
-  gap: 0.25em;
+  gap: 0.35em;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  text-align: left;
+}
+.tile-svg-wrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  cursor: grab;
+  user-select: none;
+}
+.tile-svg-wrap:active {
+  cursor: grabbing;
+}
+.tile-svg-wrap .tile-svg {
+  width: 100%;
+  height: 100%;
+}
+.tile-drag-icon {
+  position: absolute;
+  flex-shrink: 0;
+  top: 2px;
+  right: 2px;
+  font-size: 8px;
+  line-height: 1;
+  letter-spacing: 0;
+  color: hsl(0 0% 0% / 0.32);
+  pointer-events: none;
+  z-index: 1;
+  text-shadow:
+    0 0 1px hsl(0 0% 100% / 0.9),
+    0 0 2px hsl(0 0% 100% / 0.7);
+}
+.tile-item-body {
   display: flex;
   flex-direction: column;
-  text-align: left;
+  gap: 0.25em;
+  min-width: 0;
+  flex: 1;
 }
 .tile-item svg {
   position: relative;
@@ -36,28 +74,31 @@
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
   cursor: pointer;
 }
-.tile-item input[type="number"] {
-  display: flex;
-  all: unset;
-
-  box-sizing: border-box;
-  background: #fff;
+.tile-delete {
+  align-self: flex-start;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 11px;
+  color: hsl(0 0% 40%);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.12s ease,
+    color 0.12s ease;
 }
-.tile-item:hover:before {
-  content: "×";
-  z-index: 2;
-  position: absolute;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  top: 1em;
-  right: 1em;
-  width: 1em;
-  height: 1em;
-  color: #000;
-  background: #fff;
-  border-radius: 1em;
+.tile-item:hover .tile-delete,
+.tile-item:focus-within .tile-delete {
+  opacity: 1;
+  pointer-events: auto;
+}
+.tile-delete:hover {
+  color: hsl(0 60% 35%);
 }
 
 .controls {
@@ -70,7 +111,7 @@
   gap: 0.5em;
   & > * {
     position: relative;
-    aspect-ratio: 1/1;
+    aspect-ratio: 2/1;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -142,6 +183,13 @@ input[type="file"]::file-selector-button {
   display: block; /* Prevent inline SVG from introducing spaces */
   max-width: 100%;
   height: auto;
+}
+
+.uploaded-tiles {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 2 0 0%;
 }
 
 .generator {

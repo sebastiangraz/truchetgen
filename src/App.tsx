@@ -1,4 +1,11 @@
-import React, { useState, useEffect, ChangeEvent, useMemo } from "react";
+import {
+  useState,
+  useEffect,
+  ChangeEvent,
+  useMemo,
+  useRef,
+  DragEvent,
+} from "react";
 import { generateTiledSVG, processUploadedTiles } from "./utils/svgutils";
 import { handleFileUpload } from "./utils/fileutils";
 import { Tile, ShapeType, RotationType } from "./types";
@@ -9,20 +16,40 @@ interface TruchetGeneratorProps {
   tileSize?: number;
 }
 
-const TruchetGenerator: React.FC<TruchetGeneratorProps> = ({
-  tileSize = 24,
-}) => {
+const parseStoredTiles = (raw: string): Tile[] => {
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    const result: Tile[] = [];
+    for (const item of parsed) {
+      if (!item || typeof item !== "object") continue;
+      const o = item as Record<string, unknown>;
+      if (typeof o.svg !== "string" || typeof o.fileName !== "string") continue;
+      result.push({
+        id: typeof o.id === "string" ? o.id : crypto.randomUUID(),
+        svg: o.svg,
+        fileName: o.fileName,
+      });
+    }
+    return result;
+  } catch {
+    return [];
+  }
+};
+
+const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
   const [uploadedTiles, setUploadedTiles] = useState<Tile[]>([]);
   const [error, setError] = useState<string>("");
   const [gridSize, setGridSize] = useState<number>(8);
   const [shape, setShape] = useState<ShapeType>("random");
   const [rotation, setRotation] = useState<RotationType>("default");
-  const [sigma, setSigma] = useState<number>(0.15); // Default sigma value
+  const [sigma, setSigma] = useState<number>(0.15);
+  const dragFromIndex = useRef<number | null>(null);
 
   useEffect(() => {
     const storedTiles = localStorage.getItem("uploadedTiles");
     if (storedTiles) {
-      setUploadedTiles(JSON.parse(storedTiles));
+      setUploadedTiles(parseStoredTiles(storedTiles));
     }
   }, []);
 
@@ -30,27 +57,29 @@ const TruchetGenerator: React.FC<TruchetGeneratorProps> = ({
     localStorage.setItem("uploadedTiles", JSON.stringify(uploadedTiles));
   }, [uploadedTiles]);
 
-  // 4. Processed Tiles Memoization
   const processedTiles = useMemo(
     () => processUploadedTiles(uploadedTiles, tileSize),
     [uploadedTiles, tileSize]
   );
 
-  // 5. Generate Tiled SVG
+  const tilesForGeneration = useMemo(
+    () => processedTiles.filter((t) => t.processedSVG.trim() !== ""),
+    [processedTiles]
+  );
+
   const tiledSVG = useMemo(() => {
-    if (processedTiles.length === 0) return "";
+    if (tilesForGeneration.length === 0) return "";
 
     return generateTiledSVG(
-      processedTiles,
+      tilesForGeneration,
       gridSize,
       tileSize,
       shape,
       rotation,
-      sigma // Pass sigma here
+      sigma
     );
-  }, [processedTiles, gridSize, tileSize, shape, rotation, sigma]);
+  }, [tilesForGeneration, gridSize, tileSize, shape, rotation, sigma]);
 
-  // Event Handlers
   const handleSliderChange = (e: ChangeEvent<HTMLInputElement>) => {
     const newSize = parseInt(e.target.value, 10);
     setGridSize(newSize);
@@ -71,16 +100,38 @@ const TruchetGenerator: React.FC<TruchetGeneratorProps> = ({
     setSigma(newSigma);
   };
 
-  const handleTileBusynessChange = (
-    index: number,
-    e: ChangeEvent<HTMLInputElement>
-  ) => {
-    const newBusyness = parseInt(e.target.value, 10);
-    setUploadedTiles((prevTiles) => {
-      const updatedTiles = [...prevTiles];
-      updatedTiles[index] = { ...updatedTiles[index], busyness: newBusyness };
-      return updatedTiles;
+  const reorderTiles = (from: number, to: number) => {
+    if (from === to) return;
+    setUploadedTiles((prev) => {
+      const next = [...prev];
+      const [removed] = next.splice(from, 1);
+      next.splice(to, 0, removed);
+      return next;
     });
+  };
+
+  const handleDragStart = (index: number) => (e: DragEvent<HTMLDivElement>) => {
+    dragFromIndex.current = index;
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", String(index));
+  };
+
+  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  };
+
+  const handleDrop =
+    (dropIndex: number) => (e: DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      const from = dragFromIndex.current;
+      dragFromIndex.current = null;
+      if (from === null || from === dropIndex) return;
+      reorderTiles(from, dropIndex);
+    };
+
+  const handleDragEnd = () => {
+    dragFromIndex.current = null;
   };
 
   const deleteTile = (index: number) => {
@@ -96,9 +147,7 @@ const TruchetGenerator: React.FC<TruchetGeneratorProps> = ({
     localStorage.removeItem("uploadedTiles");
   };
 
-  // New function to add an empty tile
   const addEmptyTile = () => {
-    // Create an empty SVG string
     const emptySvgContent = `
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
         <rect width="24" height="24" fill="none" />
@@ -106,15 +155,14 @@ const TruchetGenerator: React.FC<TruchetGeneratorProps> = ({
     `;
 
     const newTile: Tile = {
+      id: crypto.randomUUID(),
       svg: emptySvgContent,
       fileName: "empty",
-      busyness: 0, // Since it's empty
     };
 
     setUploadedTiles((prevTiles) => [...prevTiles, newTile]);
   };
 
-  // JSX Rendering
   return (
     <div className="generator">
       <div className="controls">
@@ -152,24 +200,40 @@ const TruchetGenerator: React.FC<TruchetGeneratorProps> = ({
                   tile.fileName.substring(0, tile.fileName.lastIndexOf(".")) ||
                   tile.fileName;
                 return (
-                  <div key={index} className="tile-item">
-                    <div
-                      onClick={() => deleteTile(index)}
-                      className="tile-svg"
-                      dangerouslySetInnerHTML={{ __html: processedSVG }}
-                    />
-                    <input
-                      type="number"
-                      placeholder="Busyness"
-                      min="0"
-                      max="10"
-                      value={tile.busyness}
-                      onChange={(e) => handleTileBusynessChange(index, e)}
-                    />
-                    <p className="file-name">{fileName}</p>
+                  <div
+                    key={tile.id}
+                    className="tile-item"
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop(index)}
+                  >
+                    <div className="tile-item-body">
+                      <div
+                        className="tile-svg-wrap"
+                        draggable
+                        onDragStart={handleDragStart(index)}
+                        onDragEnd={handleDragEnd}
+                        title="Drag to reorder"
+                      >
+                        <div
+                          className="tile-svg"
+                          dangerouslySetInnerHTML={{ __html: processedSVG }}
+                        />
+                        <span className="tile-drag-icon" aria-hidden="true">
+                          ⋮⋮
+                        </span>
+                      </div>
+                      <p className="file-name">{fileName}</p>
+                      <button
+                        type="button"
+                        className="tile-delete"
+                        onClick={() => deleteTile(index)}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 );
-              })}{" "}
+              })}
             </div>
           )}
           <span onClick={addEmptyTile} className="empty">

@@ -40,9 +40,9 @@ export const handleFileUpload = (
       }));
 
       const newTiles: Tile[] = sanitizedSVGS.map(({ svg, fileName }) => ({
+        id: crypto.randomUUID(),
         svg,
         fileName,
-        busyness: 5, // Default busyness
       }));
 
       setUploadedTiles((prev) => [...prev, ...newTiles]);

@@ -139,15 +139,13 @@ export const processUploadedTiles = (
   tiles: Tile[],
   tileSize: number
 ): ProcessedTile[] => {
-  return tiles
-    .map((tile) => {
-      const processedSVG = extractInnerSVG(tile, tileSize);
-      return {
-        ...tile,
-        processedSVG,
-      };
-    })
-    .filter((tile) => tile.processedSVG.trim() !== "");
+  return tiles.map((tile) => {
+    const processedSVG = extractInnerSVG(tile, tileSize);
+    return {
+      ...tile,
+      processedSVG,
+    };
+  });
 };
 
 // 7. Select Tile for Position
@@ -191,9 +189,9 @@ export const selectTileCircle = (
   const centerY = gridSize / 2;
   const totalRadius = gridSize / 2;
 
-  // Sort tiles by busyness in descending order
-  const sortedTiles = tiles.slice().sort((a, b) => b.busyness - a.busyness);
-  const numTiles = sortedTiles.length;
+  // Tile order follows the user’s list order (first = innermost ring)
+  const orderedTiles = tiles.slice();
+  const numTiles = orderedTiles.length;
 
   // Precompute the cumulative area percentages for each ring
   const ringAreaPercentages = [];
@@ -243,7 +241,7 @@ export const selectTileCircle = (
   }
 
   // Select the tile corresponding to the ring
-  return sortedTiles[ringIndex];
+  return orderedTiles[ringIndex];
 };
 
 // 7c. Select Tile for Gradient Shape
@@ -255,9 +253,9 @@ export const selectTileGradient = (
 ): ProcessedTile => {
   const normalizedRow = row / (gridSize - 1); // 0 at top, 1 at bottom
 
-  // Sort tiles by busyness in descending order
-  const sortedTiles = tiles.slice().sort((a, b) => b.busyness - a.busyness);
-  const numTiles = sortedTiles.length;
+  // Tile order follows the user’s list order (first = top of gradient)
+  const orderedTiles = tiles.slice();
+  const numTiles = orderedTiles.length;
 
   // Precompute the positions for each tile along the gradient
   const tilePositions = [];
@@ -289,7 +287,7 @@ export const selectTileGradient = (
   for (const w of normalizedWeights) {
     cumulative += w.weight;
     if (rand <= cumulative) {
-      return sortedTiles[w.index];
+      return orderedTiles[w.index];
     }
   }
 
@@ -316,23 +314,22 @@ export const selectTileExponential = (
   const startCol = Math.floor((gridSize - busyTilesCount) / 2);
   const endCol = startCol + busyTilesCount - 1;
 
+  const mid = Math.ceil(tiles.length / 2);
+  const busyTiles = tiles.slice(0, mid);
+  const emptyTiles = tiles.slice(mid);
+
   if (col >= startCol && col <= endCol) {
-    const busyTiles = tiles.filter((tile) => tile.busyness === 10);
     if (busyTiles.length > 0) {
       const busyIndex = Math.floor(Math.random() * busyTiles.length);
       return busyTiles[busyIndex];
-    } else {
-      return selectTileRandom(tiles);
     }
-  } else {
-    const emptyTiles = tiles.filter((tile) => tile.busyness === 0);
-    if (emptyTiles.length > 0) {
-      const emptyIndex = Math.floor(Math.random() * emptyTiles.length);
-      return emptyTiles[emptyIndex];
-    } else {
-      return selectTileRandom(tiles);
-    }
+    return selectTileRandom(tiles);
   }
+  if (emptyTiles.length > 0) {
+    const emptyIndex = Math.floor(Math.random() * emptyTiles.length);
+    return emptyTiles[emptyIndex];
+  }
+  return selectTileRandom(tiles);
 };
 
 // 8. Get Rotation Angle

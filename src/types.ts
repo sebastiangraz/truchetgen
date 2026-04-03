@@ -1,6 +1,7 @@
 export interface Tile {
+  /** Stable id for list keys and drag-and-drop. */
+  id: string;
   svg: string;
-  busyness: number;
   fileName: string;
 }
 
