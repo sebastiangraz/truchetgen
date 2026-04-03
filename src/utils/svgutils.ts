@@ -37,8 +37,9 @@ export const generateTiledSVG = (
         sigma
       );
 
-      // Get rotation angle
-      const rotationAngle = getRotationAngle(rotation, row, col, gridSize);
+      const patternRotation = getRotationAngle(rotation, row, col, gridSize);
+      const tileRotation = selectedTile.tileRotationDeg ?? 0;
+      const rotationAngle = patternRotation + tileRotation;
 
       const xPos = col * tileSize;
       const yPos = row * tileSize;

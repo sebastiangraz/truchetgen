@@ -3,6 +3,8 @@ export interface Tile {
   id: string;
   svg: string;
   fileName: string;
+  /** Per-instance rotation in degrees (0, 90, 180, or −90). Applied on top of pattern rotation. */
+  tileRotationDeg?: number;
 }
 
 export interface ProcessedTile extends Tile {

@@ -20,6 +20,17 @@ interface TruchetGeneratorProps {
   tileSize?: number;
 }
 
+const TILE_ROTATION_CYCLE = [0, 90, 180, -90] as const;
+
+const normalizeStoredTileRotation = (v: unknown): number | undefined => {
+  if (typeof v !== "number" || !Number.isFinite(v)) return undefined;
+  if (v === 270) return -90;
+  if (v === 0 || v === 90 || v === 180 || v === -90) {
+    return v;
+  }
+  return undefined;
+};
+
 const parseStoredTiles = (raw: string): Tile[] => {
   try {
     const parsed = JSON.parse(raw) as unknown;
@@ -29,10 +40,12 @@ const parseStoredTiles = (raw: string): Tile[] => {
       if (!item || typeof item !== "object") continue;
       const o = item as Record<string, unknown>;
       if (typeof o.svg !== "string" || typeof o.fileName !== "string") continue;
+      const rot = normalizeStoredTileRotation(o.tileRotationDeg);
       result.push({
         id: typeof o.id === "string" ? o.id : crypto.randomUUID(),
         svg: o.svg,
         fileName: o.fileName,
+        ...(rot !== undefined ? { tileRotationDeg: rot } : {}),
       });
     }
     return result;
@@ -175,6 +188,31 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
     localStorage.removeItem("uploadedTiles");
   };
 
+  const resetAllRotations = () => {
+    setActiveTiles((prev) =>
+      prev.map((t) => {
+        const next = { ...t };
+        delete next.tileRotationDeg;
+        return next;
+      }),
+    );
+  };
+
+  const rotateTileAt = (index: number) => {
+    setActiveTiles((prev) => {
+      const next = [...prev];
+      const t = next[index];
+      const cur = t.tileRotationDeg ?? 0;
+      const idx = TILE_ROTATION_CYCLE.indexOf(
+        cur as (typeof TILE_ROTATION_CYCLE)[number],
+      );
+      const safeIdx = idx === -1 ? 0 : idx;
+      const nextDeg = TILE_ROTATION_CYCLE[(safeIdx + 1) % 4];
+      next[index] = { ...t, tileRotationDeg: nextDeg };
+      return next;
+    });
+  };
+
   const displayName = (fileName: string) =>
     fileName.substring(0, fileName.lastIndexOf(".")) || fileName;
 
@@ -300,6 +338,7 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                 {activeTiles.map((tile, index) => {
                   const processedSVG =
                     processedTiles[index]?.processedSVG || "";
+                  const tileDeg = tile.tileRotationDeg ?? 0;
                   return (
                     <div
                       key={tile.id}
@@ -317,6 +356,10 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                         >
                           <div
                             className="tile-svg"
+                            style={{
+                              transform: `rotate(${tileDeg}deg)`,
+                              transformOrigin: "center center",
+                            }}
                             dangerouslySetInnerHTML={{ __html: processedSVG }}
                           />
                           <span className="tile-drag-icon" aria-hidden="true">
@@ -326,6 +369,14 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                         <p className="file-name">
                           {displayName(tile.fileName)}
                         </p>
+                        <button
+                          type="button"
+                          className="tile-rotate"
+                          onClick={() => rotateTileAt(index)}
+                          aria-label="Rotate tile 90 degrees clockwise"
+                        >
+                          Rotate
+                        </button>
                         <button
                           type="button"
                           className="tile-delete"
@@ -339,10 +390,21 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                 })}
               </div>
             )}
-            <div>
-              <span onClick={clearAllTiles} className="clear-all-button">
+            <div className="active-tiles-actions">
+              <button
+                type="button"
+                className="reset-rotations-button"
+                onClick={resetAllRotations}
+              >
+                Reset all rotations
+              </button>
+              <button
+                type="button"
+                className="clear-all-button"
+                onClick={clearAllTiles}
+              >
                 Clear All Tiles
-              </span>
+              </button>
             </div>
           </div>
         </div>

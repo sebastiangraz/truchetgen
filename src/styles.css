@@ -185,6 +185,32 @@
   height: 32px;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
 }
+.tile-rotate {
+  align-self: flex-start;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 11px;
+  color: hsl(0 0% 40%);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.12s ease,
+    color 0.12s ease;
+}
+.tile-item:hover .tile-rotate,
+.tile-item:focus-within .tile-rotate {
+  opacity: 1;
+  pointer-events: auto;
+}
+.tile-rotate:hover {
+  color: hsl(210 60% 38%);
+}
 .tile-delete {
   align-self: flex-start;
   margin: 0;
@@ -209,6 +235,45 @@
   pointer-events: auto;
 }
 .tile-delete:hover {
+  color: hsl(0 60% 35%);
+}
+
+.active-tiles-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75em 1em;
+}
+.reset-rotations-button {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: inherit;
+  color: hsl(0 0% 35%);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.reset-rotations-button:hover {
+  color: hsl(210 55% 32%);
+}
+
+.clear-all-button {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 11px;
+  color: hsl(0 0% 40%);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  transition: color 0.12s ease;
+}
+.clear-all-button:hover {
   color: hsl(0 60% 35%);
 }
 
