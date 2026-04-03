@@ -5,16 +5,28 @@ const EMPTY_TILE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 
 /** Stable id for the built-in transparent tile (first in the catalog). */
 export const PRELOADED_EMPTY_TILE_ID = "preloaded-empty";
 
+/** Same SVG as empty; ring index is spread-exempt (hard boundary for shape spread). */
+export const PRELOADED_SPREAD_EXEMPT_TILE_ID = "preloaded-spread-exempt";
+
+/** Match on `fileName` for uploaded duplicates and catalog entry. */
+export const SPREAD_EXEMPT_FILE_NAME = "exempt";
+
 const emptyCatalogTile: Tile = {
   id: PRELOADED_EMPTY_TILE_ID,
   fileName: "empty",
   svg: EMPTY_TILE_SVG,
 };
 
+const spreadExemptCatalogTile: Tile = {
+  id: PRELOADED_SPREAD_EXEMPT_TILE_ID,
+  fileName: SPREAD_EXEMPT_FILE_NAME,
+  svg: EMPTY_TILE_SVG,
+};
+
 /**
  * Preloaded SVGs from `src/assets/tiles/*.svg` (bundled at build time).
  * Add or replace files in that folder; order follows sorted paths.
- * The empty transparent tile is always listed first.
+ * The empty transparent tile is always listed first, then the spread-exempt tile.
  */
 const rawTileModules = import.meta.glob<string>("../assets/tiles/*.svg", {
   eager: true,
@@ -32,7 +44,7 @@ const pathToStableId = (path: string): string =>
 
 export const getPreloadedTiles = (): Tile[] => {
   const paths = Object.keys(rawTileModules).sort((a, b) =>
-    a.localeCompare(b, undefined, { sensitivity: "base" })
+    a.localeCompare(b, undefined, { sensitivity: "base" }),
   );
 
   const fromAssets = paths.map((path) => {
@@ -44,5 +56,5 @@ export const getPreloadedTiles = (): Tile[] => {
     };
   });
 
-  return [emptyCatalogTile, ...fromAssets];
+  return [emptyCatalogTile, spreadExemptCatalogTile, ...fromAssets];
 };

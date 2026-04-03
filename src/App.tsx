@@ -6,11 +6,16 @@ import {
   useRef,
   DragEvent,
 } from "react";
-import { generateTiledSVG, processUploadedTiles } from "./utils/svgutils";
+import {
+  generateTiledSVG,
+  isSpreadExempt,
+  processUploadedTiles,
+} from "./utils/svgutils";
 import { handleFileUpload } from "./utils/fileutils";
 import {
   getPreloadedTiles,
   PRELOADED_EMPTY_TILE_ID,
+  PRELOADED_SPREAD_EXEMPT_TILE_ID,
 } from "./utils/defaultTiles";
 import { Tile, ShapeType, RotationType, OpacityType } from "./types";
 
@@ -79,7 +84,12 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
 
   const catalogTiles = useMemo(() => getPreloadedTiles(), []);
   const hasAssetCatalogTiles = useMemo(
-    () => catalogTiles.some((t) => t.id !== PRELOADED_EMPTY_TILE_ID),
+    () =>
+      catalogTiles.some(
+        (t) =>
+          t.id !== PRELOADED_EMPTY_TILE_ID &&
+          t.id !== PRELOADED_SPREAD_EXEMPT_TILE_ID,
+      ),
     [catalogTiles],
   );
 
@@ -414,7 +424,11 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                     title="Add to sequence"
                   >
                     <div
-                      className="default-tile-thumb"
+                      className={
+                        tile.id === PRELOADED_SPREAD_EXEMPT_TILE_ID
+                          ? "default-tile-thumb default-tile-thumb--spread-exempt"
+                          : "default-tile-thumb"
+                      }
                       dangerouslySetInnerHTML={{ __html: processedSVG }}
                     />
                     <span className="default-tile-name">
@@ -444,7 +458,11 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                     >
                       <div className="tile-item-body">
                         <div
-                          className="tile-svg-wrap"
+                          className={
+                            isSpreadExempt(tile)
+                              ? "tile-svg-wrap tile-svg-wrap--spread-exempt"
+                              : "tile-svg-wrap"
+                          }
                           draggable
                           onDragStart={handleDragStart(index)}
                           onDragEnd={handleDragEnd}

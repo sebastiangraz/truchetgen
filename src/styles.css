@@ -104,6 +104,37 @@
   display: block;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
 }
+
+/* Catalog + tiles in use: subtle X overlay (not in generated SVG) */
+.default-tile-thumb--spread-exempt,
+.tile-svg-wrap--spread-exempt {
+  position: relative;
+}
+.default-tile-thumb--spread-exempt::before,
+.default-tile-thumb--spread-exempt::after,
+.tile-svg-wrap--spread-exempt::before,
+.tile-svg-wrap--spread-exempt::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1px;
+  height: 72%;
+  margin-left: -0.5px;
+  margin-top: -36%;
+  background: hsl(220 8% 42% / 0.28);
+  pointer-events: none;
+  z-index: 1;
+  border-radius: 0.5px;
+}
+.default-tile-thumb--spread-exempt::before,
+.tile-svg-wrap--spread-exempt::before {
+  transform: rotate(45deg);
+}
+.default-tile-thumb--spread-exempt::after,
+.tile-svg-wrap--spread-exempt::after {
+  transform: rotate(-45deg);
+}
 .default-tile-name {
   font-size: 7px;
   line-height: 1.15;
@@ -166,7 +197,7 @@
   letter-spacing: 0;
   color: hsl(0 0% 0% / 0.32);
   pointer-events: none;
-  z-index: 1;
+  z-index: 2;
   text-shadow:
     0 0 1px hsl(0 0% 100% / 0.9),
     0 0 2px hsl(0 0% 100% / 0.7);

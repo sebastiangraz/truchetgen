@@ -7,6 +7,143 @@ import {
   ShapeType,
   OpacityType,
 } from "../types";
+import {
+  PRELOADED_SPREAD_EXEMPT_TILE_ID,
+  SPREAD_EXEMPT_FILE_NAME,
+} from "./defaultTiles";
+
+export const isSpreadExempt = (tile: Pick<Tile, "fileName" | "id">): boolean =>
+  tile.fileName === SPREAD_EXEMPT_FILE_NAME ||
+  tile.id === PRELOADED_SPREAD_EXEMPT_TILE_ID;
+
+/** Nearest ring index for circle mode (targets at (i+1)/n in cumulative area space). */
+export const getIdealCircleRingIndex = (
+  cumulativeAreaPercentage: number,
+  numTiles: number
+): number => {
+  if (numTiles <= 1) return 0;
+  let best = 0;
+  let bestDiff = Infinity;
+  for (let i = 0; i < numTiles; i++) {
+    const target = (i + 1) / numTiles;
+    const d = Math.abs(cumulativeAreaPercentage - target);
+    if (d < bestDiff) {
+      bestDiff = d;
+      best = i;
+    }
+  }
+  return best;
+};
+
+/** Nearest tile index along vertical gradient (targets at i/(n-1)). */
+export const getIdealGradientTileIndex = (
+  normalizedRow: number,
+  numTiles: number
+): number => {
+  if (numTiles <= 1) return 0;
+  let best = 0;
+  let bestDiff = Infinity;
+  for (let i = 0; i < numTiles; i++) {
+    const target = i / (numTiles - 1);
+    const d = Math.abs(normalizedRow - target);
+    if (d < bestDiff) {
+      bestDiff = d;
+      best = i;
+    }
+  }
+  return best;
+};
+
+/**
+ * Deterministic global tile index for exponential shape (busy band vs empty band,
+ * then row-based pick within that half). Uses same geometry as `selectTileExponential`.
+ */
+export const getIdealExponentialGlobalIndex = (
+  tiles: ProcessedTile[],
+  row: number,
+  col: number,
+  gridSize: number,
+  shapeSpread: number
+): number => {
+  const n = tiles.length;
+  if (n <= 1) return 0;
+  const mid = Math.ceil(n / 2);
+  const normalizedRow = row / Math.max(1, gridSize - 1);
+  const exponent = (1 - shapeSpread) * 4 + 1;
+  const fractionOfBusyTiles = Math.pow(normalizedRow, exponent);
+  const numBusyTiles = Math.round(fractionOfBusyTiles * gridSize);
+  const busyTilesCount = Math.min(numBusyTiles, gridSize);
+  const startCol = Math.floor((gridSize - busyTilesCount) / 2);
+  const endCol = startCol + busyTilesCount - 1;
+
+  const busyIndices = Array.from({ length: mid }, (_, i) => i);
+  const emptyIndices = Array.from({ length: n - mid }, (_, i) => i + mid);
+
+  if (col >= startCol && col <= endCol) {
+    if (busyIndices.length === 0) return 0;
+    const local =
+      busyIndices.length === 1
+        ? 0
+        : Math.min(
+            busyIndices.length - 1,
+            Math.max(0, Math.round(normalizedRow * (busyIndices.length - 1)))
+          );
+    return busyIndices[local];
+  }
+  if (emptyIndices.length === 0) return Math.min(row, n - 1);
+  const local =
+    emptyIndices.length === 1
+      ? 0
+      : Math.min(
+          emptyIndices.length - 1,
+          Math.max(0, Math.round(normalizedRow * (emptyIndices.length - 1)))
+        );
+  return emptyIndices[local];
+};
+
+const applySpreadExemptMask = (
+  weights: { index: number; weight: number }[],
+  orderedTiles: ProcessedTile[],
+  idealIndex: number
+): { index: number; weight: number }[] => {
+  const idealTile = orderedTiles[idealIndex];
+
+  // Ideal ring is spread-exempt: act as a hard mask — only that ring, no blur from inner rings.
+  if (isSpreadExempt(idealTile)) {
+    return weights.map((w) => ({
+      ...w,
+      weight: w.index === idealIndex ? 1 : 0,
+    }));
+  }
+
+  const masked = weights.map((w) => {
+    if (isSpreadExempt(orderedTiles[w.index]) && w.index !== idealIndex) {
+      return { ...w, weight: 0 };
+    }
+    return w;
+  });
+  const sum = masked.reduce((s, w) => s + w.weight, 0);
+  if (sum <= 0) {
+    return [{ index: idealIndex, weight: 1 }];
+  }
+  return masked.map((w) => ({ ...w, weight: w.weight / sum }));
+};
+
+const pickTileByNormalizedWeights = (
+  normalizedWeights: { index: number; weight: number }[],
+  orderedTiles: ProcessedTile[],
+  fallbackIndex: number
+): ProcessedTile => {
+  const rand = Math.random();
+  let cumulative = 0;
+  for (const w of normalizedWeights) {
+    cumulative += w.weight;
+    if (rand <= cumulative) {
+      return orderedTiles[w.index];
+    }
+  }
+  return orderedTiles[fallbackIndex];
+};
 
 export const traverseAndRemoveFills = (element: Element) => {
   element.setAttribute("fill", "none");
@@ -319,6 +456,11 @@ export const selectTileCircle = (
   const normalizedDistance = distance / totalRadius;
   const cumulativeAreaPercentage = normalizedDistance * normalizedDistance;
 
+  const idealRingIndex = getIdealCircleRingIndex(
+    cumulativeAreaPercentage,
+    numTiles
+  );
+
   // Gaussian spread for ring weights (shapeSpread controls transition width)
 
   // Calculate weights for each ring using Gaussian function
@@ -334,25 +476,21 @@ export const selectTileCircle = (
 
   // Normalize weights
   const totalWeight = weights.reduce((sum, w) => sum + w.weight, 0);
-  const normalizedWeights = weights.map((w) => ({
+  const preMask = weights.map((w) => ({
     index: w.index,
     weight: w.weight / totalWeight,
   }));
+  const normalizedWeights = applySpreadExemptMask(
+    preMask,
+    orderedTiles,
+    idealRingIndex
+  );
 
-  // Randomly select a ring based on weights
-  const rand = Math.random();
-  let cumulative = 0;
-  let ringIndex = numTiles - 1; // Default to outermost ring
-  for (const w of normalizedWeights) {
-    cumulative += w.weight;
-    if (rand <= cumulative) {
-      ringIndex = w.index;
-      break;
-    }
-  }
-
-  // Select the tile corresponding to the ring
-  return orderedTiles[ringIndex];
+  return pickTileByNormalizedWeights(
+    normalizedWeights,
+    orderedTiles,
+    idealRingIndex
+  );
 };
 
 // 7c. Select Tile for Gradient Shape
@@ -362,16 +500,21 @@ export const selectTileGradient = (
   gridSize: number,
   shapeSpread: number
 ): ProcessedTile => {
-  const normalizedRow = row / (gridSize - 1); // 0 at top, 1 at bottom
+  const normalizedRow =
+    gridSize <= 1 ? 0 : row / (gridSize - 1); // 0 at top, 1 at bottom
 
   // Tile order follows the user’s list order (first = top of gradient)
   const orderedTiles = tiles.slice();
   const numTiles = orderedTiles.length;
 
+  const idealTileIndex = getIdealGradientTileIndex(normalizedRow, numTiles);
+
   // Precompute the positions for each tile along the gradient
   const tilePositions = [];
   for (let i = 0; i < numTiles; i++) {
-    tilePositions.push(i / (numTiles - 1)); // Positions from 0 to 1
+    tilePositions.push(
+      numTiles <= 1 ? 0 : i / (numTiles - 1)
+    ); // Positions from 0 to 1
   }
 
   // Calculate weights for each tile using Gaussian function
@@ -387,23 +530,21 @@ export const selectTileGradient = (
 
   // Normalize weights
   const totalWeight = weights.reduce((sum, w) => sum + w.weight, 0);
-  const normalizedWeights = weights.map((w) => ({
+  const preMask = weights.map((w) => ({
     index: w.index,
     weight: w.weight / totalWeight,
   }));
+  const normalizedWeights = applySpreadExemptMask(
+    preMask,
+    orderedTiles,
+    idealTileIndex
+  );
 
-  // Randomly select a tile based on weights
-  const rand = Math.random();
-  let cumulative = 0;
-  for (const w of normalizedWeights) {
-    cumulative += w.weight;
-    if (rand <= cumulative) {
-      return orderedTiles[w.index];
-    }
-  }
-
-  // Fallback
-  return selectTileRandom(tiles);
+  return pickTileByNormalizedWeights(
+    normalizedWeights,
+    orderedTiles,
+    idealTileIndex
+  );
 };
 
 export const selectTileExponential = (
@@ -413,6 +554,16 @@ export const selectTileExponential = (
   gridSize: number,
   shapeSpread: number
 ): ProcessedTile => {
+  const orderedTiles = tiles.slice();
+  const n = orderedTiles.length;
+  const idealGlobalIndex = getIdealExponentialGlobalIndex(
+    orderedTiles,
+    row,
+    col,
+    gridSize,
+    shapeSpread
+  );
+
   const normalizedRow = row / Math.max(1, gridSize - 1);
 
   // Exponent from shapeSpread (5 → 1 as spread goes 0 → 1)
@@ -425,22 +576,32 @@ export const selectTileExponential = (
   const startCol = Math.floor((gridSize - busyTilesCount) / 2);
   const endCol = startCol + busyTilesCount - 1;
 
-  const mid = Math.ceil(tiles.length / 2);
-  const busyTiles = tiles.slice(0, mid);
-  const emptyTiles = tiles.slice(mid);
+  const mid = Math.ceil(n / 2);
+  const busyIndices = Array.from({ length: mid }, (_, i) => i);
+  const emptyIndices = Array.from({ length: n - mid }, (_, i) => i + mid);
 
-  if (col >= startCol && col <= endCol) {
-    if (busyTiles.length > 0) {
-      const busyIndex = Math.floor(Math.random() * busyTiles.length);
-      return busyTiles[busyIndex];
-    }
+  const poolIndices =
+    col >= startCol && col <= endCol ? busyIndices : emptyIndices;
+
+  if (poolIndices.length === 0) {
     return selectTileRandom(tiles);
   }
-  if (emptyTiles.length > 0) {
-    const emptyIndex = Math.floor(Math.random() * emptyTiles.length);
-    return emptyTiles[emptyIndex];
-  }
-  return selectTileRandom(tiles);
+
+  const uniformWeights = poolIndices.map((idx) => ({
+    index: idx,
+    weight: 1 / poolIndices.length,
+  }));
+  const normalizedWeights = applySpreadExemptMask(
+    uniformWeights,
+    orderedTiles,
+    idealGlobalIndex
+  );
+
+  return pickTileByNormalizedWeights(
+    normalizedWeights,
+    orderedTiles,
+    idealGlobalIndex
+  );
 };
 
 const QUARTER_TURNS = [0, 90, 180, -90] as const;
