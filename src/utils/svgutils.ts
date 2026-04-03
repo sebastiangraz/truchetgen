@@ -17,22 +17,45 @@ export const traverseAndRemoveFills = (element: Element) => {
   });
 };
 
+/**
+ * Gamma-style remap on linear opacity [0, 1]. Lower sigma → sharper ramp (more contrast);
+ * higher sigma → closer to linear (1.0 = identity).
+ */
+export const applyOpacitySigma = (raw: number, opacitySigma: number): number => {
+  const s = Math.max(0.01, Math.min(1, opacitySigma));
+  const t = Math.max(0, Math.min(1, raw));
+  return Math.pow(t, 1 / s);
+};
+
+/** Uniform noise in [-opacityRandomness, +opacityRandomness], then clamped to [0, 1]. */
+export const applyOpacityRandomness = (
+  base: number,
+  opacityRandomness: number
+): number => {
+  const r = Math.max(0, Math.min(1, opacityRandomness));
+  if (r <= 0) return base;
+  const noise = (Math.random() - 0.5) * 2 * r;
+  return Math.max(0, Math.min(1, base + noise));
+};
+
 /** Per-cell opacity in [0, 1] for SVG `opacity` attribute. */
 export const getOpacityForPosition = (
   opacity: OpacityType,
   row: number,
   col: number,
-  gridSize: number
+  gridSize: number,
+  opacitySigma: number
 ): number => {
   if (opacity === "uniform") return 1;
 
   if (opacity === "gradient") {
-    if (gridSize <= 1) return 1;
-    return row / (gridSize - 1);
+    if (gridSize <= 1) return applyOpacitySigma(1, opacitySigma);
+    const raw = row / (gridSize - 1);
+    return applyOpacitySigma(raw, opacitySigma);
   }
 
   if (opacity === "orb" || opacity === "orb-inverted") {
-    if (gridSize <= 1) return 1;
+    if (gridSize <= 1) return applyOpacitySigma(1, opacitySigma);
     const cx = gridSize / 2;
     const cy = gridSize / 2;
     const x = col + 0.5;
@@ -48,13 +71,14 @@ export const getOpacityForPosition = (
     for (const [px, py] of corners) {
       maxDist = Math.max(maxDist, Math.hypot(px - cx, py - cy));
     }
-    if (maxDist <= 0) return 1;
+    if (maxDist <= 0) return applyOpacitySigma(1, opacitySigma);
     const t = Math.max(0, Math.min(1, 1 - dist / maxDist));
-    return opacity === "orb-inverted" ? 1 - t : t;
+    const raw = opacity === "orb-inverted" ? 1 - t : t;
+    return applyOpacitySigma(raw, opacitySigma);
   }
 
   if (opacity === "diamond") {
-    if (gridSize <= 1) return 1;
+    if (gridSize <= 1) return applyOpacitySigma(1, opacitySigma);
     const cx = gridSize / 2;
     const cy = gridSize / 2;
     const x = col + 0.5;
@@ -73,8 +97,9 @@ export const getOpacityForPosition = (
         Math.abs(px - cx) + Math.abs(py - cy)
       );
     }
-    if (maxManhattan <= 0) return 1;
-    return Math.max(0, Math.min(1, 1 - manhattan / maxManhattan));
+    if (maxManhattan <= 0) return applyOpacitySigma(1, opacitySigma);
+    const raw = Math.max(0, Math.min(1, 1 - manhattan / maxManhattan));
+    return applyOpacitySigma(raw, opacitySigma);
   }
 
   return 1;
@@ -88,7 +113,9 @@ export const generateTiledSVG = (
   shape: ShapeType,
   rotation: RotationType,
   sigma: number,
-  opacity: OpacityType
+  opacity: OpacityType,
+  opacitySigma: number,
+  opacityRandomness: number
 ): string => {
   const svgWidth = gridSize * tileSize;
   const svgHeight = gridSize * tileSize;
@@ -124,7 +151,14 @@ export const generateTiledSVG = (
         tileSize / 2
       }, ${tileSize / 2})`;
 
-      const cellOpacity = getOpacityForPosition(opacity, row, col, gridSize);
+      let cellOpacity = getOpacityForPosition(
+        opacity,
+        row,
+        col,
+        gridSize,
+        opacitySigma
+      );
+      cellOpacity = applyOpacityRandomness(cellOpacity, opacityRandomness);
 
       svgString += `<g id="${uniqueId}" transform="${transform}" opacity="${cellOpacity}">${selectedTile.processedSVG}</g>`;
     }

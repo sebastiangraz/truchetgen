@@ -72,6 +72,8 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
   const [rotation, setRotation] = useState<RotationType>("default");
   const [opacity, setOpacity] = useState<OpacityType>("uniform");
   const [sigma, setSigma] = useState<number>(0.15);
+  const [opacitySigma, setOpacitySigma] = useState<number>(0.15);
+  const [opacityRandomness, setOpacityRandomness] = useState<number>(0);
   const dragFromIndex = useRef<number | null>(null);
 
   const catalogTiles = useMemo(() => getPreloadedTiles(), []);
@@ -110,8 +112,20 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
       rotation,
       sigma,
       opacity,
+      opacitySigma,
+      opacityRandomness,
     );
-  }, [tilesForGeneration, gridSize, tileSize, shape, rotation, sigma, opacity]);
+  }, [
+    tilesForGeneration,
+    gridSize,
+    tileSize,
+    shape,
+    rotation,
+    sigma,
+    opacity,
+    opacitySigma,
+    opacityRandomness,
+  ]);
 
   const handleSliderChange = (e: ChangeEvent<HTMLInputElement>) => {
     const newSize = parseInt(e.target.value, 10);
@@ -135,6 +149,14 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
   const handleSigmaChange = (e: ChangeEvent<HTMLInputElement>) => {
     const newSigma = parseFloat(e.target.value);
     setSigma(newSigma);
+  };
+
+  const handleOpacitySigmaChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setOpacitySigma(parseFloat(e.target.value));
+  };
+
+  const handleOpacityRandomnessChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setOpacityRandomness(parseFloat(e.target.value));
   };
 
   const addCatalogTileToActive = (tile: Tile) => {
@@ -318,6 +340,36 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                 onChange={handleSigmaChange}
               />
             </div>
+            <div>
+              <label htmlFor="opacitySigma">
+                Opacity Sigma {opacitySigma.toFixed(2)}
+              </label>
+              <input
+                type="range"
+                id="opacitySigma"
+                name="opacitySigma"
+                min="0.01"
+                max="1.0"
+                step="0.01"
+                value={opacitySigma}
+                onChange={handleOpacitySigmaChange}
+              />
+            </div>
+            <div>
+              <label htmlFor="opacityRandomness">
+                Opacity Randomness {opacityRandomness.toFixed(2)}
+              </label>
+              <input
+                type="range"
+                id="opacityRandomness"
+                name="opacityRandomness"
+                min="0"
+                max="1.0"
+                step="0.01"
+                value={opacityRandomness}
+                onChange={handleOpacityRandomnessChange}
+              />
+            </div>
           </div>
         </div>
 
@@ -447,7 +499,7 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
             className="download-svg-button"
             target="_blank"
             href={`data:image/svg+xml;base64,${btoa(tiledSVG)}`}
-            download={`${shape}-o${opacity}-s${sigma}-${gridSize}x${gridSize}-truchet.svg`}
+            download={`${shape}-o${opacity}-os${opacitySigma}-ornd${opacityRandomness}-s${sigma}-${gridSize}x${gridSize}-truchet.svg`}
           >
             Download SVG
           </a>
