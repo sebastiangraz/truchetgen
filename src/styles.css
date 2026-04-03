@@ -246,6 +246,37 @@
 .tile-rotate:hover {
   color: hsl(210 60% 38%);
 }
+.tile-distribute {
+  align-self: flex-start;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 10px;
+  color: hsl(0 0% 40%);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.12s ease,
+    color 0.12s ease;
+}
+.tile-item:hover .tile-distribute,
+.tile-item:focus-within .tile-distribute {
+  opacity: 1;
+  pointer-events: auto;
+}
+.tile-distribute:hover {
+  color: hsl(145 45% 32%);
+}
+.tile-distribute--on {
+  color: hsl(145 50% 28%);
+  font-weight: 600;
+  text-decoration: none;
+}
 .tile-delete {
   align-self: flex-start;
   margin: 0;

@@ -51,6 +51,7 @@ const parseStoredTiles = (raw: string): Tile[] => {
         svg: o.svg,
         fileName: o.fileName,
         ...(rot !== undefined ? { tileRotationDeg: rot } : {}),
+        ...(o.distribute === true ? { distribute: true } : {}),
       });
     }
     return result;
@@ -260,6 +261,19 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
       const safeIdx = idx === -1 ? 0 : idx;
       const nextDeg = TILE_ROTATION_CYCLE[(safeIdx + 1) % 4];
       next[index] = { ...t, tileRotationDeg: nextDeg };
+      return next;
+    });
+  };
+
+  const toggleDistributeAt = (index: number) => {
+    setActiveTiles((prev) => {
+      const next = [...prev];
+      const t = next[index];
+      const on = !t.distribute;
+      next[index] = on ? { ...t, distribute: true } : { ...t };
+      if (!on) {
+        delete next[index].distribute;
+      }
       return next;
     });
   };
@@ -512,6 +526,23 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                           aria-label="Rotate tile 90 degrees clockwise"
                         >
                           Rotate
+                        </button>
+                        <button
+                          type="button"
+                          className={
+                            tile.distribute
+                              ? "tile-distribute tile-distribute--on"
+                              : "tile-distribute"
+                          }
+                          onClick={() => toggleDistributeAt(index)}
+                          aria-pressed={tile.distribute ?? false}
+                          aria-label={
+                            tile.distribute
+                              ? "Distribute on: uniform placement across the grid"
+                              : "Distribute off: follow list order for shape placement"
+                          }
+                        >
+                          Distribute
                         </button>
                         <button
                           type="button"

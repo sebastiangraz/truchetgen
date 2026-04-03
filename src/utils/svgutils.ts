@@ -101,19 +101,37 @@ export const getIdealExponentialGlobalIndex = (
   return emptyIndices[local];
 };
 
+/** First spread-exempt index in list order (inner → outer); −1 if none. */
+const getFirstSpreadExemptIndex = (orderedTiles: ProcessedTile[]): number =>
+  orderedTiles.findIndex((t) => isSpreadExempt(t));
+
 const applySpreadExemptMask = (
   weights: { index: number; weight: number }[],
   orderedTiles: ProcessedTile[],
   idealIndex: number
 ): { index: number; weight: number }[] => {
+  const firstExemptIdx = getFirstSpreadExemptIndex(orderedTiles);
+  const hasExempt = firstExemptIdx >= 0;
   const idealTile = orderedTiles[idealIndex];
 
-  // Ideal ring is spread-exempt: act as a hard mask — only that ring, no blur from inner rings.
+  const isAfterFirstExempt = (idx: number) => hasExempt && idx > firstExemptIdx;
+
+  // Ideal ring is spread-exempt: hard mask — only that ring unless a “distribute” tile
+  // sits after the first exempt boundary (those may still appear in those cells).
   if (isSpreadExempt(idealTile)) {
-    return weights.map((w) => ({
-      ...w,
-      weight: w.index === idealIndex ? 1 : 0,
-    }));
+    const masked = weights.map((w) => {
+      if (w.index === idealIndex) return w;
+      const t = orderedTiles[w.index];
+      if (t.distribute && isAfterFirstExempt(w.index)) {
+        return w;
+      }
+      return { ...w, weight: 0 };
+    });
+    const sum = masked.reduce((s, w) => s + w.weight, 0);
+    if (sum <= 0) {
+      return [{ index: idealIndex, weight: 1 }];
+    }
+    return masked.map((w) => ({ ...w, weight: w.weight / sum }));
   }
 
   const masked = weights.map((w) => {
@@ -127,6 +145,21 @@ const applySpreadExemptMask = (
     return [{ index: idealIndex, weight: 1 }];
   }
   return masked.map((w) => ({ ...w, weight: w.weight / sum }));
+};
+
+/** Blend in uniform weights for tiles with distribute before spread-exempt masking. */
+const mergeDistributeUniformWeights = (
+  normalizedSpatialWeights: { index: number; weight: number }[],
+  orderedTiles: ProcessedTile[]
+): { index: number; weight: number }[] => {
+  const merged = normalizedSpatialWeights.map((w) =>
+    orderedTiles[w.index].distribute ? { ...w, weight: 1 } : w
+  );
+  const sum = merged.reduce((s, w) => s + w.weight, 0);
+  if (sum <= 0) {
+    return normalizedSpatialWeights;
+  }
+  return merged.map((w) => ({ ...w, weight: w.weight / sum }));
 };
 
 const pickTileByNormalizedWeights = (
@@ -504,8 +537,9 @@ export const selectTileCircle = (
     index: w.index,
     weight: w.weight / totalWeight,
   }));
+  const mergedSpatial = mergeDistributeUniformWeights(preMask, orderedTiles);
   const normalizedWeights = applySpreadExemptMask(
-    preMask,
+    mergedSpatial,
     orderedTiles,
     idealRingIndex
   );
@@ -558,8 +592,9 @@ export const selectTileGradient = (
     index: w.index,
     weight: w.weight / totalWeight,
   }));
+  const mergedSpatial = mergeDistributeUniformWeights(preMask, orderedTiles);
   const normalizedWeights = applySpreadExemptMask(
-    preMask,
+    mergedSpatial,
     orderedTiles,
     idealTileIndex
   );
@@ -611,12 +646,22 @@ export const selectTileExponential = (
     return selectTileRandom(tiles);
   }
 
-  const uniformWeights = poolIndices.map((idx) => ({
-    index: idx,
-    weight: 1 / poolIndices.length,
+  const poolSet = new Set(poolIndices);
+  const rawWeights = orderedTiles.map((t, idx) => {
+    if (t.distribute) return { index: idx, weight: 1 };
+    if (!poolSet.has(idx)) return { index: idx, weight: 0 };
+    return { index: idx, weight: 1 };
+  });
+  const rawSum = rawWeights.reduce((s, w) => s + w.weight, 0);
+  if (rawSum <= 0) {
+    return selectTileRandom(tiles);
+  }
+  const preMask = rawWeights.map((w) => ({
+    ...w,
+    weight: w.weight / rawSum,
   }));
   const normalizedWeights = applySpreadExemptMask(
-    uniformWeights,
+    preMask,
     orderedTiles,
     idealGlobalIndex
   );
