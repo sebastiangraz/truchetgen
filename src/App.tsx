@@ -394,21 +394,23 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                 onChange={handleRotationRandomnessChange}
               />
             </div>
-            <div>
-              <label htmlFor="opacitySigma">
-                Opacity Sigma {opacitySigma.toFixed(2)}
-              </label>
-              <input
-                type="range"
-                id="opacitySigma"
-                name="opacitySigma"
-                min="0"
-                max="1.0"
-                step="0.01"
-                value={opacitySigma}
-                onChange={handleOpacitySigmaChange}
-              />
-            </div>
+            {opacity !== "uniform" && (
+              <div>
+                <label htmlFor="opacitySigma">
+                  Opacity Sigma {opacitySigma.toFixed(2)}
+                </label>
+                <input
+                  type="range"
+                  id="opacitySigma"
+                  name="opacitySigma"
+                  min="0"
+                  max="1.0"
+                  step="0.01"
+                  value={opacitySigma}
+                  onChange={handleOpacitySigmaChange}
+                />
+              </div>
+            )}
             <div>
               <label htmlFor="opacityRandomness">
                 Opacity Randomness {opacityRandomness.toFixed(2)}
@@ -424,21 +426,23 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                 onChange={handleOpacityRandomnessChange}
               />
             </div>
-            <div>
-              <label htmlFor="opacityContrast">
-                Opacity Contrast {opacityContrast.toFixed(2)}
-              </label>
-              <input
-                type="range"
-                id="opacityContrast"
-                name="opacityContrast"
-                min="0"
-                max="1.0"
-                step="0.01"
-                value={opacityContrast}
-                onChange={handleOpacityContrastChange}
-              />
-            </div>
+            {opacity !== "uniform" && (
+              <div>
+                <label htmlFor="opacityContrast">
+                  Opacity Contrast {opacityContrast.toFixed(2)}
+                </label>
+                <input
+                  type="range"
+                  id="opacityContrast"
+                  name="opacityContrast"
+                  min="0"
+                  max="1.0"
+                  step="0.01"
+                  value={opacityContrast}
+                  onChange={handleOpacityContrastChange}
+                />
+              </div>
+            )}
           </div>
         </div>
 
