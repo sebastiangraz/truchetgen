@@ -34,6 +34,53 @@
   }
 }
 
+/* Default catalog + “tiles in use”: one row layout (thumb + meta) */
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35em;
+  min-width: 0;
+  flex: 1;
+  text-align: left;
+}
+
+.tileThumb {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.tileThumb svg {
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1) inset;
+  display: block;
+  width: 32px;
+  height: 32px;
+  &:hover {
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2) inset;
+  }
+}
+
+.tileMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25em;
+  min-width: 0;
+  flex: 1;
+}
+
+.tileCaption {
+  font-size: 10px;
+  line-height: 1.15;
+  width: 100%;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  word-break: break-word;
+  hyphens: auto;
+}
+
 .grid {
   display: grid;
   width: 100%;
@@ -112,15 +159,9 @@
   }
 }
 
-.stackCentered {
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75em;
-}
-
 .ranges {
   display: grid;
-  grid-template-columns: max-content 1fr;
+  grid-template-columns: 1fr 2fr;
   row-gap: 0.5em;
   column-gap: 0.75em;
   align-items: center;
@@ -138,7 +179,8 @@
       white-space: nowrap;
     }
 
-    input[type="range"] {
+    input[type="range"],
+    select {
       min-width: 0;
       width: 100%;
     }
@@ -158,10 +200,6 @@
 
   .pick {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 0.2em;
     width: 100%;
     min-width: 0;
     padding: 0;
@@ -169,37 +207,16 @@
     background: transparent;
     cursor: pointer;
     font-size: inherit;
+    text-align: left;
 
-    &:hover .thumb {
+    /* &:hover .tileThumb {
       background: hsl(0 0% 0% / 0.04);
-    }
+    } */
   }
 
-  .thumb {
-    flex-shrink: 0;
-    width: 28px;
-    height: 28px;
-
-    svg {
-      width: 28px;
-      height: 28px;
-      display: block;
-      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
-    }
-  }
-
-  .label {
-    font-size: 10px;
-    line-height: 1.15;
-    width: 100%;
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 1;
-    line-clamp: 1;
-    word-break: break-word;
-    hyphens: auto;
-  }
+  /* .tileThumb svg {
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+  } */
 }
 
 .panelBody {
@@ -222,53 +239,20 @@
   .card {
     position: relative;
     background: #eee;
-    gap: 0.35em;
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    text-align: left;
-
-    &[data-distribute="true"] svg {
-      box-shadow: 0 0 0 1px hsl(145 40% 42%) inset;
-    }
-
-    svg {
-      position: relative;
-      width: 32px;
-      z-index: 0;
-      height: 32px;
-      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1) inset;
-    }
-  }
-
-  .body {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25em;
     min-width: 0;
-    flex: 1;
-
-    .fileName {
-      font-size: 10px;
-    }
   }
 
-  .preview {
-    position: relative;
-    flex-shrink: 0;
-    width: 32px;
-    height: 32px;
+  .tileThumb {
     cursor: grab;
     user-select: none;
 
     &:active {
       cursor: grabbing;
     }
+  }
 
-    .graphic {
-      width: 100%;
-      height: 100%;
-    }
+  .card[data-distribute="true"] .tileThumb svg {
+    box-shadow: 0 0 0 1px hsl(145 40% 42%) inset;
   }
 
   .dragHint {

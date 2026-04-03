@@ -298,8 +298,8 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
           />
         </div>
         <div className={`${styles.cell} ${styles.cellControls}`}>
-          <div className={styles.stack}>
-            <div>
+          <div className={styles.ranges}>
+            <div className={styles.rangeRow}>
               <label htmlFor="shape">Shape</label>
               <select
                 id="shape"
@@ -313,7 +313,7 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                 <option value="exponential">Exponential</option>
               </select>
             </div>
-            <div>
+            <div className={styles.rangeRow}>
               <label htmlFor="rotation">Rotation</label>
               <select
                 id="rotation"
@@ -326,7 +326,7 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                 <option value="pyramid">Pyramid</option>
               </select>
             </div>
-            <div>
+            <div className={styles.rangeRow}>
               <label htmlFor="opacity">Opacity</label>
               <select
                 id="opacity"
@@ -460,16 +460,21 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                     onClick={() => addCatalogTileToActive(tile)}
                     title="Add to sequence"
                   >
-                    <div
-                      className={
-                        tile.id === PRELOADED_SPREAD_EXEMPT_TILE_ID
-                          ? `${styles.thumb} ${styles.spreadExempt}`
-                          : styles.thumb
-                      }
-                      dangerouslySetInnerHTML={{ __html: processedSVG }}
-                    />
-                    <span className={styles.label}>
-                      {displayName(tile.fileName)}
+                    <span className={styles.tile}>
+                      <span
+                        className={
+                          tile.id === PRELOADED_SPREAD_EXEMPT_TILE_ID
+                            ? `${styles.tileThumb} ${styles.spreadExempt}`
+                            : styles.tileThumb
+                        }
+                      >
+                        <span
+                          dangerouslySetInnerHTML={{ __html: processedSVG }}
+                        />
+                      </span>
+                      <span className={styles.tileCaption}>
+                        {displayName(tile.fileName)}
+                      </span>
                     </span>
                   </button>
                 </li>
@@ -494,12 +499,12 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                       onDragOver={handleDragOver}
                       onDrop={handleDrop(index)}
                     >
-                      <div className={styles.body}>
+                      <div className={styles.tile}>
                         <div
                           className={
                             isSpreadExempt(tile)
-                              ? `${styles.preview} ${styles.spreadExempt}`
-                              : styles.preview
+                              ? `${styles.tileThumb} ${styles.spreadExempt}`
+                              : styles.tileThumb
                           }
                           draggable
                           onDragStart={handleDragStart(index)}
@@ -518,41 +523,43 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                             ⋮⋮
                           </span>
                         </div>
-                        <p className={styles.fileName}>
-                          {displayName(tile.fileName)}
-                        </p>
-                        <button
-                          type="button"
-                          className={`${styles.cardAction} ${styles.cardActionAccent}`}
-                          onClick={() => rotateTileAt(index)}
-                          aria-label="Rotate tile 90 degrees clockwise"
-                        >
-                          Rotate
-                        </button>
-                        <button
-                          type="button"
-                          className={
-                            tile.distribute
-                              ? `${styles.cardAction} ${styles.cardActionSuccess} ${styles.distributeOn}`
-                              : `${styles.cardAction} ${styles.cardActionSuccess}`
-                          }
-                          onClick={() => toggleDistributeAt(index)}
-                          aria-pressed={tile.distribute ?? false}
-                          aria-label={
-                            tile.distribute
-                              ? "Distribute on: band-sized count, random cells; omitted from shape hierarchy"
-                              : "Distribute off: tile follows list order in the shape"
-                          }
-                        >
-                          Dist
-                        </button>
-                        <button
-                          type="button"
-                          className={`${styles.cardAction} ${styles.cardActionDanger}`}
-                          onClick={() => deleteTile(index)}
-                        >
-                          Delete
-                        </button>
+                        <div className={styles.tileMeta}>
+                          <p className={styles.tileCaption}>
+                            {displayName(tile.fileName)}
+                          </p>
+                          <button
+                            type="button"
+                            className={`${styles.cardAction} ${styles.cardActionAccent}`}
+                            onClick={() => rotateTileAt(index)}
+                            aria-label="Rotate tile 90 degrees clockwise"
+                          >
+                            Rotate
+                          </button>
+                          <button
+                            type="button"
+                            className={
+                              tile.distribute
+                                ? `${styles.cardAction} ${styles.cardActionSuccess} ${styles.distributeOn}`
+                                : `${styles.cardAction} ${styles.cardActionSuccess}`
+                            }
+                            onClick={() => toggleDistributeAt(index)}
+                            aria-pressed={tile.distribute ?? false}
+                            aria-label={
+                              tile.distribute
+                                ? "Distribute on: band-sized count, random cells; omitted from shape hierarchy"
+                                : "Distribute off: tile follows list order in the shape"
+                            }
+                          >
+                            Dist
+                          </button>
+                          <button
+                            type="button"
+                            className={`${styles.cardAction} ${styles.cardActionDanger}`}
+                            onClick={() => deleteTile(index)}
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </div>
                     </div>
                   );
