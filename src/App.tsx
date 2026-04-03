@@ -285,24 +285,22 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
     <div className="generator">
       <div className="app-grid">
         <div className="app-grid__cell app-grid__cell--title">
-          <div className="multi-container">
+          <div className="multi-container multi-container--title">
             <h1>
               Truchet
               <br /> Generator
             </h1>
+            <div className="upload-container">
+              <input
+                type="file"
+                accept=".svg"
+                multiple
+                onChange={(e) => handleFileUpload(e, setActiveTiles, setError)}
+              />
+            </div>
           </div>
         </div>
-        <div className="app-grid__cell app-grid__cell--upload">
-          <div className="upload-container">
-            <input
-              type="file"
-              accept=".svg"
-              multiple
-              onChange={(e) => handleFileUpload(e, setActiveTiles, setError)}
-            />
-          </div>
-        </div>
-        <div className="app-grid__cell app-grid__cell--shape">
+        <div className="app-grid__cell app-grid__cell--controls">
           <div className="multi-container">
             <div>
               <label htmlFor="shape">Shape</label>
@@ -349,8 +347,8 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
           </div>
         </div>
         <div className="app-grid__cell app-grid__cell--sliders">
-          <div className="multi-container">
-            <div>
+          <div className="sliders-subgrid-panel">
+            <div className="slider-row">
               <label htmlFor="gridSize">
                 Grid Size {gridSize}x{gridSize}
               </label>
@@ -364,7 +362,7 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                 onChange={handleSliderChange}
               />
             </div>
-            <div>
+            <div className="slider-row">
               <label htmlFor="shapeSpread">
                 Shape Spread {shapeSpread.toFixed(2)}
               </label>
@@ -379,7 +377,7 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                 onChange={handleShapeSpreadChange}
               />
             </div>
-            <div>
+            <div className="slider-row">
               <label htmlFor="rotationRandomness">
                 Rotation Randomness {rotationRandomness.toFixed(2)}
               </label>
@@ -395,7 +393,7 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
               />
             </div>
             {opacity !== "uniform" && (
-              <div>
+              <div className="slider-row">
                 <label htmlFor="opacitySigma">
                   Opacity Sigma {opacitySigma.toFixed(2)}
                 </label>
@@ -411,7 +409,7 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                 />
               </div>
             )}
-            <div>
+            <div className="slider-row">
               <label htmlFor="opacityRandomness">
                 Opacity Randomness {opacityRandomness.toFixed(2)}
               </label>
@@ -427,7 +425,7 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
               />
             </div>
             {opacity !== "uniform" && (
-              <div>
+              <div className="slider-row">
                 <label htmlFor="opacityContrast">
                   Opacity Contrast {opacityContrast.toFixed(2)}
                 </label>

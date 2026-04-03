@@ -1,6 +1,34 @@
 /* styles.css */
 
-/* Single layout: 4×2 — row 1 controls, row 2 = 1 col catalog + 3 cols tiles in use */
+.generator {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  padding-top: 0.5em;
+}
+
+body {
+  font-size: 12px;
+  line-height: 1;
+}
+
+a {
+  display: block;
+  color: #000;
+}
+
+* {
+  font-family: monospace;
+  text-transform: uppercase;
+  box-sizing: border-box;
+  accent-color: #000;
+  margin: 0;
+}
+html {
+  scrollbar-gutter: stable both-edges;
+}
+
+/* Single layout: 4×2 — row 1: title+upload | dropdowns | sliders (2 cols); row 2: catalog + active */
 .app-grid {
   display: grid;
   width: 100%;
@@ -8,7 +36,7 @@
   grid-template-rows: auto auto;
   gap: 0.5em;
   grid-template-areas:
-    "title upload shape sliders"
+    "title controls sliders sliders"
     "catalog active active active";
 }
 .app-grid__cell {
@@ -24,12 +52,9 @@
 .app-grid__cell--title {
   grid-area: title;
 }
-.app-grid__cell--upload {
-  grid-area: upload;
-}
-.app-grid__cell--shape {
-  grid-area: shape;
-  align-items: stretch;
+.app-grid__cell--controls {
+  grid-area: controls;
+  align-items: center;
   justify-content: center;
 }
 .app-grid__cell--sliders {
@@ -346,7 +371,6 @@
 .app-grid .multi-container {
   display: flex;
   flex-direction: column;
-  align-items: start;
   row-gap: 0.5em;
   width: 100%;
   label {
@@ -358,8 +382,13 @@
     align-items: center;
   }
 }
-.app-grid__cell--title .multi-container {
+.multi-container--title {
+  flex-direction: column;
   align-items: center;
+  text-align: center;
+  gap: 0.75em;
+}
+.app-grid__cell--title .multi-container--title h1 {
   text-align: center;
 }
 .upload-container {
@@ -367,6 +396,32 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Range rows: shared column tracks so labels and sliders align (CSS subgrid) */
+.sliders-subgrid-panel {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  row-gap: 0.5em;
+  column-gap: 0.75em;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+}
+.slider-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  align-items: center;
+  min-width: 0;
+}
+.slider-row label {
+  text-align: left;
+  white-space: nowrap;
+}
+.slider-row input[type="range"] {
+  min-width: 0;
+  width: 100%;
 }
 
 .download-svg-button {
@@ -385,9 +440,16 @@ select {
   background: #fff;
 }
 
+/* Hide native “no file chosen” label; only the button is visible */
 input[type="file"] {
   all: unset;
   box-sizing: border-box;
+  display: inline-block;
+  max-width: 100%;
+  font-size: 0;
+  line-height: 0;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
   &:hover::file-selector-button {
     cursor: pointer;
     background: #000;
@@ -398,12 +460,20 @@ input[type="file"] {
 input[type="file"]::file-selector-button {
   all: unset;
   box-sizing: border-box;
-  display: flex;
-  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1;
   text-align: center;
+  text-transform: inherit;
+  color: #000;
+  -webkit-text-fill-color: currentColor;
   background: #fff;
-  padding: 1em 1.25em;
-  margin-bottom: 1em;
+  padding: 0.45em 0.75em;
+  margin: 0;
+  cursor: pointer;
 }
 
 .svg-container {
@@ -415,32 +485,4 @@ input[type="file"]::file-selector-button {
   display: block; /* Prevent inline SVG from introducing spaces */
   max-width: 100%;
   height: auto;
-}
-
-.generator {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5em;
-}
-
-body {
-  font-size: 12px;
-  line-height: 1;
-}
-
-a {
-  display: block;
-  margin-top: 10px;
-  color: #000;
-}
-
-* {
-  font-family: monospace;
-  text-transform: uppercase;
-  box-sizing: border-box;
-  accent-color: #000;
-  margin: 0;
-}
-html {
-  scrollbar-gutter: stable both-edges;
 }
