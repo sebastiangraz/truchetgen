@@ -490,7 +490,11 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                   return (
                     <div
                       key={tile.id}
-                      className="tile-item"
+                      className={
+                        tile.distribute
+                          ? "tile-item tile-item--distribute"
+                          : "tile-item"
+                      }
                       onDragOver={handleDragOver}
                       onDrop={handleDrop(index)}
                     >
@@ -544,7 +548,7 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                               : "Distribute off: tile follows list order in the shape"
                           }
                         >
-                          Distribute
+                          Dist
                         </button>
                         <button
                           type="button"
