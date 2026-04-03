@@ -1,29 +1,59 @@
 /* styles.css */
 
-.tiles-row {
-  display: flex;
+/* Single layout: 4×2 — row 1 controls, row 2 = 1 col catalog + 3 cols tiles in use */
+.app-grid {
+  display: grid;
   width: 100%;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: auto auto;
+  gap: 0.5em;
+  grid-template-areas:
+    "title upload shape sliders"
+    "catalog active active active";
+}
+.app-grid__cell {
+  position: relative;
+  background: #eee;
+  padding: 1em;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.app-grid__cell--title {
+  grid-area: title;
+}
+.app-grid__cell--upload {
+  grid-area: upload;
+}
+.app-grid__cell--shape {
+  grid-area: shape;
+  align-items: stretch;
+  justify-content: center;
+}
+.app-grid__cell--sliders {
+  grid-area: sliders;
+  align-items: stretch;
+  justify-content: center;
+}
+.app-grid__cell--catalog {
+  overflow-x: auto;
+  grid-area: catalog;
   align-items: stretch;
   justify-content: flex-start;
-  gap: 0.5em;
+}
+.app-grid__cell--active {
+  grid-area: active;
+  align-items: stretch;
+  justify-content: flex-start;
 }
 .tiles-column {
   display: flex;
   flex-direction: column;
   gap: 0.5em;
   min-width: 0;
-  padding: 1em;
-}
-.tiles-column--catalog {
-  flex: 1 0 0%;
-  width: max-content;
-  max-width: 100%;
-  background: #eee;
-}
-.tiles-column--active {
-  flex: 3 0 0%;
-  min-width: 0;
-  background: #eee;
+  width: 100%;
 }
 .tiles-column-heading {
   font-size: 10px;
@@ -194,46 +224,36 @@
   color: hsl(0 60% 35%);
 }
 
-.controls {
+.app-grid .multi-container {
   display: flex;
-  justify-content: start;
-  align-items: stretch;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: start;
+  row-gap: 0.5em;
   width: 100%;
-  margin: 0 auto;
-  gap: 0.5em;
+  label {
+    min-width: 16ch;
+    text-align: left;
+  }
   & > * {
-    position: relative;
-    /* aspect-ratio: 2/1; */
     display: flex;
     align-items: center;
-    justify-content: center;
-    background: #eee;
-    padding: 2em;
-    flex: 1 0 0%;
-    gap: 0.5em;
-    & > label,
-    & > input,
-    & > button {
-      color: hsl(0deg 0% 0% / 0.4);
-    }
-  }
-  .multi-container {
-    display: flex;
-    flex-direction: column;
-    align-items: start;
-    row-gap: 0.5em;
-    label {
-      min-width: 16ch;
-      text-align: left;
-    }
-    & > * {
-      display: flex;
-      align-items: center;
-    }
   }
 }
+.app-grid__cell--title .multi-container {
+  align-items: center;
+  text-align: center;
+}
+.upload-container {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
+.download-svg-button {
+  margin-top: 1em;
+  display: inline-block;
+}
 .error {
   color: red;
 }

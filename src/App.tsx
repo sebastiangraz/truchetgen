@@ -189,83 +189,89 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
 
   return (
     <div className="generator">
-      <div className="controls">
-        <div className="multi-container">
-          <h1>
-            Truchet
-            <br /> Generator
-          </h1>
-        </div>
-        <div className="upload-container">
-          <input
-            type="file"
-            accept=".svg"
-            multiple
-            onChange={(e) => handleFileUpload(e, setActiveTiles, setError)}
-          />
-        </div>
-        <div className="multi-container">
-          <div>
-            <label htmlFor="shape">Shape</label>
-            <select
-              id="shape"
-              name="shape"
-              value={shape}
-              onChange={handleShapeChange}
-            >
-              <option value="random">Random</option>
-              <option value="circle">Circle</option>
-              <option value="gradient">Gradient</option>
-              <option value="exponential">Exponential</option>
-            </select>
-          </div>
-          <div>
-            <label htmlFor="rotation">Rotation</label>
-            <select
-              id="rotation"
-              name="rotation"
-              value={rotation}
-              onChange={handleRotationChange}
-            >
-              <option value="default">Default</option>
-              <option value="random">Random</option>
-              <option value="pyramid">Pyramid</option>
-            </select>
+      <div className="app-grid">
+        <div className="app-grid__cell app-grid__cell--title">
+          <div className="multi-container">
+            <h1>
+              Truchet
+              <br /> Generator
+            </h1>
           </div>
         </div>
-        <div className="multi-container">
-          <div>
-            <label htmlFor="gridSize">
-              Grid Size {gridSize}x{gridSize}
-            </label>
+        <div className="app-grid__cell app-grid__cell--upload">
+          <div className="upload-container">
             <input
-              type="range"
-              id="gridSize"
-              name="gridSize"
-              min="8"
-              max="56"
-              value={gridSize}
-              onChange={handleSliderChange}
-            />
-          </div>
-          <div>
-            <label htmlFor="sigma">Sigma {sigma.toFixed(2)}</label>
-            <input
-              type="range"
-              id="sigma"
-              name="sigma"
-              min="0.01"
-              max="1.0"
-              step="0.01"
-              value={sigma}
-              onChange={handleSigmaChange}
+              type="file"
+              accept=".svg"
+              multiple
+              onChange={(e) => handleFileUpload(e, setActiveTiles, setError)}
             />
           </div>
         </div>
-      </div>
+        <div className="app-grid__cell app-grid__cell--shape">
+          <div className="multi-container">
+            <div>
+              <label htmlFor="shape">Shape</label>
+              <select
+                id="shape"
+                name="shape"
+                value={shape}
+                onChange={handleShapeChange}
+              >
+                <option value="random">Random</option>
+                <option value="circle">Circle</option>
+                <option value="gradient">Gradient</option>
+                <option value="exponential">Exponential</option>
+              </select>
+            </div>
+            <div>
+              <label htmlFor="rotation">Rotation</label>
+              <select
+                id="rotation"
+                name="rotation"
+                value={rotation}
+                onChange={handleRotationChange}
+              >
+                <option value="default">Default</option>
+                <option value="random">Random</option>
+                <option value="pyramid">Pyramid</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div className="app-grid__cell app-grid__cell--sliders">
+          <div className="multi-container">
+            <div>
+              <label htmlFor="gridSize">
+                Grid Size {gridSize}x{gridSize}
+              </label>
+              <input
+                type="range"
+                id="gridSize"
+                name="gridSize"
+                min="8"
+                max="56"
+                value={gridSize}
+                onChange={handleSliderChange}
+              />
+            </div>
+            <div>
+              <label htmlFor="sigma">Sigma {sigma.toFixed(2)}</label>
+              <input
+                type="range"
+                id="sigma"
+                name="sigma"
+                min="0.01"
+                max="1.0"
+                step="0.01"
+                value={sigma}
+                onChange={handleSigmaChange}
+              />
+            </div>
+          </div>
+        </div>
 
-      <div className="tiles-row">
-        <div className="tiles-column tiles-column--catalog">
+        <div className="app-grid__cell app-grid__cell--catalog tiles-column tiles-column--catalog">
           <p className="tiles-column-heading">Default tiles</p>
           {catalogTiles.length === 0 ? (
             <p className="tiles-column-empty">No assets in src/assets/tiles</p>
@@ -296,7 +302,7 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
             </ul>
           )}
         </div>
-        <div className="tiles-column tiles-column--active">
+        <div className="app-grid__cell app-grid__cell--active tiles-column tiles-column--active">
           <p className="tiles-column-heading">Tiles in use</p>
           <div className="active-tiles-inner">
             {activeTiles.length > 0 && (
@@ -372,6 +378,7 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
             )}
           </div>
           <a
+            className="download-svg-button"
             target="_blank"
             href={`data:image/svg+xml;base64,${btoa(tiledSVG)}`}
             download={`${shape}-s${sigma}-${gridSize}x${gridSize}-truchet.svg`}
