@@ -1,6 +1,12 @@
 //svgutils.ts
 
-import { Tile, ProcessedTile, RotationType, ShapeType } from "../types";
+import {
+  Tile,
+  ProcessedTile,
+  RotationType,
+  ShapeType,
+  OpacityType,
+} from "../types";
 
 export const traverseAndRemoveFills = (element: Element) => {
   element.setAttribute("fill", "none");
@@ -11,6 +17,69 @@ export const traverseAndRemoveFills = (element: Element) => {
   });
 };
 
+/** Per-cell opacity in [0, 1] for SVG `opacity` attribute. */
+export const getOpacityForPosition = (
+  opacity: OpacityType,
+  row: number,
+  col: number,
+  gridSize: number
+): number => {
+  if (opacity === "uniform") return 1;
+
+  if (opacity === "gradient") {
+    if (gridSize <= 1) return 1;
+    return row / (gridSize - 1);
+  }
+
+  if (opacity === "orb" || opacity === "orb-inverted") {
+    if (gridSize <= 1) return 1;
+    const cx = gridSize / 2;
+    const cy = gridSize / 2;
+    const x = col + 0.5;
+    const y = row + 0.5;
+    const dist = Math.hypot(x - cx, y - cy);
+    const corners: [number, number][] = [
+      [0.5, 0.5],
+      [gridSize - 0.5, 0.5],
+      [0.5, gridSize - 0.5],
+      [gridSize - 0.5, gridSize - 0.5],
+    ];
+    let maxDist = 0;
+    for (const [px, py] of corners) {
+      maxDist = Math.max(maxDist, Math.hypot(px - cx, py - cy));
+    }
+    if (maxDist <= 0) return 1;
+    const t = Math.max(0, Math.min(1, 1 - dist / maxDist));
+    return opacity === "orb-inverted" ? 1 - t : t;
+  }
+
+  if (opacity === "diamond") {
+    if (gridSize <= 1) return 1;
+    const cx = gridSize / 2;
+    const cy = gridSize / 2;
+    const x = col + 0.5;
+    const y = row + 0.5;
+    const manhattan = Math.abs(x - cx) + Math.abs(y - cy);
+    const corners: [number, number][] = [
+      [0.5, 0.5],
+      [gridSize - 0.5, 0.5],
+      [0.5, gridSize - 0.5],
+      [gridSize - 0.5, gridSize - 0.5],
+    ];
+    let maxManhattan = 0;
+    for (const [px, py] of corners) {
+      maxManhattan = Math.max(
+        maxManhattan,
+        Math.abs(px - cx) + Math.abs(py - cy)
+      );
+    }
+    if (maxManhattan <= 0) return 1;
+    return Math.max(0, Math.min(1, 1 - manhattan / maxManhattan));
+  }
+
+  return 1;
+};
+
 // 6. Generate Tiled SVG Function
 export const generateTiledSVG = (
   tiles: ProcessedTile[],
@@ -18,7 +87,8 @@ export const generateTiledSVG = (
   tileSize: number,
   shape: ShapeType,
   rotation: RotationType,
-  sigma: number
+  sigma: number,
+  opacity: OpacityType
 ): string => {
   const svgWidth = gridSize * tileSize;
   const svgHeight = gridSize * tileSize;
@@ -54,7 +124,9 @@ export const generateTiledSVG = (
         tileSize / 2
       }, ${tileSize / 2})`;
 
-      svgString += `<g id="${uniqueId}" transform="${transform}">${selectedTile.processedSVG}</g>`;
+      const cellOpacity = getOpacityForPosition(opacity, row, col, gridSize);
+
+      svgString += `<g id="${uniqueId}" transform="${transform}" opacity="${cellOpacity}">${selectedTile.processedSVG}</g>`;
     }
   }
 

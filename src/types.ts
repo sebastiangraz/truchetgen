@@ -13,3 +13,10 @@ export interface ProcessedTile extends Tile {
 
 export type ShapeType = "random" | "circle" | "gradient" | "exponential";
 export type RotationType = "default" | "random" | "pyramid";
+/** Tile opacity layout: uniform, row gradient, circular or diamond radial, or inverted orb. */
+export type OpacityType =
+  | "uniform"
+  | "gradient"
+  | "orb"
+  | "orb-inverted"
+  | "diamond";

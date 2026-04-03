@@ -12,7 +12,7 @@ import {
   getPreloadedTiles,
   PRELOADED_EMPTY_TILE_ID,
 } from "./utils/defaultTiles";
-import { Tile, ShapeType, RotationType } from "./types";
+import { Tile, ShapeType, RotationType, OpacityType } from "./types";
 
 import "./styles.css";
 
@@ -70,6 +70,7 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
   const [gridSize, setGridSize] = useState<number>(8);
   const [shape, setShape] = useState<ShapeType>("random");
   const [rotation, setRotation] = useState<RotationType>("default");
+  const [opacity, setOpacity] = useState<OpacityType>("uniform");
   const [sigma, setSigma] = useState<number>(0.15);
   const dragFromIndex = useRef<number | null>(null);
 
@@ -108,8 +109,9 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
       shape,
       rotation,
       sigma,
+      opacity,
     );
-  }, [tilesForGeneration, gridSize, tileSize, shape, rotation, sigma]);
+  }, [tilesForGeneration, gridSize, tileSize, shape, rotation, sigma, opacity]);
 
   const handleSliderChange = (e: ChangeEvent<HTMLInputElement>) => {
     const newSize = parseInt(e.target.value, 10);
@@ -124,6 +126,10 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
   const handleRotationChange = (e: ChangeEvent<HTMLSelectElement>) => {
     const selectedRotation = e.target.value as RotationType;
     setRotation(selectedRotation);
+  };
+
+  const handleOpacityChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    setOpacity(e.target.value as OpacityType);
   };
 
   const handleSigmaChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -264,6 +270,21 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                 <option value="default">Default</option>
                 <option value="random">Random</option>
                 <option value="pyramid">Pyramid</option>
+              </select>
+            </div>
+            <div>
+              <label htmlFor="opacity">Opacity</label>
+              <select
+                id="opacity"
+                name="opacity"
+                value={opacity}
+                onChange={handleOpacityChange}
+              >
+                <option value="uniform">Uniform</option>
+                <option value="gradient">Gradient</option>
+                <option value="orb">Orb</option>
+                <option value="orb-inverted">Orb (inverted)</option>
+                <option value="diamond">Diamond</option>
               </select>
             </div>
           </div>
@@ -426,7 +447,7 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
             className="download-svg-button"
             target="_blank"
             href={`data:image/svg+xml;base64,${btoa(tiledSVG)}`}
-            download={`${shape}-s${sigma}-${gridSize}x${gridSize}-truchet.svg`}
+            download={`${shape}-o${opacity}-s${sigma}-${gridSize}x${gridSize}-truchet.svg`}
           >
             Download SVG
           </a>
