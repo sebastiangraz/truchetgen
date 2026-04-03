@@ -36,6 +36,7 @@ This document describes what the main React entry component does so humans and a
 | **Shape** / **Rotation** | Selects tiling / variation strategy for `generateTiledSVG`. |
 | **Grid Size** slider | Sets N for an N×N grid (labeled in the UI). |
 | **Sigma** slider | Adjusts the sigma parameter (shown to two decimal places). |
+| **Opacity Sigma** / **Opacity Randomness** / **Opacity Contrast** | Tune per-cell opacity when a non-uniform **Opacity** mode is selected: gamma-style ramp (sigma), noise (randomness), and squeezing the spatial ramp toward extremes (contrast — like tightening gradient stops for orb/gradient/diamond). |
 
 ## Props
 

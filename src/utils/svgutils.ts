@@ -164,6 +164,18 @@ export const applyOpacitySigma = (raw: number, opacitySigma: number): number => 
   return Math.pow(t, 1 / s);
 };
 
+/**
+ * Narrows the transition band of spatial opacity (gradient / orb / diamond).
+ * Higher contrast stretches values away from mid-opacity, like gradient stops moved closer together.
+ */
+export const applyOpacityContrast = (raw: number, contrast: number): number => {
+  const c = Math.max(0, Math.min(1, contrast));
+  if (c <= 0) return Math.max(0, Math.min(1, raw));
+  const t = Math.max(0, Math.min(1, raw));
+  const factor = 1 + c * 9;
+  return Math.max(0, Math.min(1, (t - 0.5) * factor + 0.5));
+};
+
 /** Uniform noise in [-opacityRandomness, +opacityRandomness], then clamped to [0, 1]. */
 export const applyOpacityRandomness = (
   base: number,
@@ -181,14 +193,18 @@ export const getOpacityForPosition = (
   row: number,
   col: number,
   gridSize: number,
-  opacitySigma: number
+  opacitySigma: number,
+  opacityContrast: number
 ): number => {
   if (opacity === "uniform") return 1;
 
   if (opacity === "gradient") {
     if (gridSize <= 1) return applyOpacitySigma(1, opacitySigma);
     const raw = row / (gridSize - 1);
-    return applyOpacitySigma(raw, opacitySigma);
+    return applyOpacitySigma(
+      applyOpacityContrast(raw, opacityContrast),
+      opacitySigma
+    );
   }
 
   if (opacity === "orb" || opacity === "orb-inverted") {
@@ -211,7 +227,10 @@ export const getOpacityForPosition = (
     if (maxDist <= 0) return applyOpacitySigma(1, opacitySigma);
     const t = Math.max(0, Math.min(1, 1 - dist / maxDist));
     const raw = opacity === "orb-inverted" ? 1 - t : t;
-    return applyOpacitySigma(raw, opacitySigma);
+    return applyOpacitySigma(
+      applyOpacityContrast(raw, opacityContrast),
+      opacitySigma
+    );
   }
 
   if (opacity === "diamond") {
@@ -236,7 +255,10 @@ export const getOpacityForPosition = (
     }
     if (maxManhattan <= 0) return applyOpacitySigma(1, opacitySigma);
     const raw = Math.max(0, Math.min(1, 1 - manhattan / maxManhattan));
-    return applyOpacitySigma(raw, opacitySigma);
+    return applyOpacitySigma(
+      applyOpacityContrast(raw, opacityContrast),
+      opacitySigma
+    );
   }
 
   return 1;
@@ -253,7 +275,8 @@ export const generateTiledSVG = (
   rotationRandomness: number,
   opacity: OpacityType,
   opacitySigma: number,
-  opacityRandomness: number
+  opacityRandomness: number,
+  opacityContrast: number
 ): string => {
   const svgWidth = gridSize * tileSize;
   const svgHeight = gridSize * tileSize;
@@ -297,7 +320,8 @@ export const generateTiledSVG = (
         row,
         col,
         gridSize,
-        opacitySigma
+        opacitySigma,
+        opacityContrast
       );
       cellOpacity = applyOpacityRandomness(cellOpacity, opacityRandomness);
 
