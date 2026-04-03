@@ -372,7 +372,7 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                 type="range"
                 id="shapeSpread"
                 name="shapeSpread"
-                min="0.01"
+                min="0"
                 max="1.0"
                 step="0.01"
                 value={shapeSpread}
@@ -402,7 +402,7 @@ const TruchetGenerator = ({ tileSize = 24 }: TruchetGeneratorProps) => {
                 type="range"
                 id="opacitySigma"
                 name="opacitySigma"
-                min="0.01"
+                min="0"
                 max="1.0"
                 step="0.01"
                 value={opacitySigma}
